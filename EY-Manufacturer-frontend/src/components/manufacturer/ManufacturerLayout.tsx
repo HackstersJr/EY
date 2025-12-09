@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { ChatWidget } from '@/components/ChatWidget';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { TimeRange, Region } from '@/lib/types';
 
 interface ManufacturerLayoutProps {
@@ -38,7 +39,7 @@ export const ManufacturerLayout = ({ children }: ManufacturerLayoutProps) => {
     };
 
     return (
-        <div className="min-h-screen bg-mfg-black bg-mesh">
+        <div className="min-h-screen theme-bg bg-mesh transition-colors duration-300">
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-40 glass-panel border-b border-mfg-border">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -117,6 +118,11 @@ export const ManufacturerLayout = ({ children }: ManufacturerLayoutProps) => {
                             >
                                 <Settings className="w-5 h-5 text-mfg-text-muted" />
                             </motion.button>
+
+                            {/* Theme Toggle */}
+                            <div className="hidden sm:block">
+                                <ThemeToggle />
+                            </div>
 
                             {/* Mobile Menu Button */}
                             <motion.button

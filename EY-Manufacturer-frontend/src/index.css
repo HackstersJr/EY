@@ -4,50 +4,186 @@
 
 @layer base {
   * {
-    @apply border-mfg-border;
+    @apply border-mfg-border dark:border-mfg-border;
   }
   
-  body {
+  /* Dark mode (default) */
+  .dark body {
     @apply bg-mfg-black text-white font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar {
+  /* Light mode */
+  .light body {
+    @apply bg-slate-50 text-slate-800 font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom Scrollbar - Dark */
+  .dark ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
-  ::-webkit-scrollbar-track {
+  .dark ::-webkit-scrollbar-track {
     @apply bg-mfg-dark-gray;
   }
 
-  ::-webkit-scrollbar-thumb {
+  .dark ::-webkit-scrollbar-thumb {
     @apply bg-mfg-light-gray rounded-full;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
+  .dark ::-webkit-scrollbar-thumb:hover {
     @apply bg-mfg-text-muted;
+  }
+
+  /* Custom Scrollbar - Light */
+  .light ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .light ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+
+  .light ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  .light ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+
+  /* Theme background utility */
+  .dark .theme-bg {
+    background-color: #0a0b0e;
+  }
+
+  .light .theme-bg {
+    background-color: #f8fafc;
   }
 }
 
 @layer components {
-  /* Glass Effects */
-  .glass {
+  /* Glass Effects - Dark Mode */
+  .dark .glass {
     @apply bg-white/[0.03] backdrop-blur-xl;
   }
 
-  .glass-card {
+  .dark .glass-card {
     @apply bg-mfg-medium-gray/80 backdrop-blur-xl border border-mfg-border rounded-2xl;
   }
 
-  .glass-strong {
+  .dark .glass-strong {
     @apply bg-mfg-medium-gray/90 backdrop-blur-xl border border-mfg-border;
   }
 
-  .glass-panel {
+  .dark .glass-panel {
     @apply bg-mfg-dark-gray/95 backdrop-blur-2xl border border-mfg-border;
+  }
+
+  /* Glass Effects - Light Mode */
+  .light .glass {
+    @apply bg-white/70 backdrop-blur-xl;
+  }
+
+  .light .glass-card {
+    @apply bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-sm;
+  }
+
+  .light .glass-strong {
+    @apply bg-white/95 backdrop-blur-xl border border-slate-200;
+  }
+
+  .light .glass-panel {
+    @apply bg-white/95 backdrop-blur-2xl border border-slate-200;
+  }
+
+  /* Light mode text overrides */
+  .light .text-white {
+    color: #1e293b;
+  }
+
+  .light .text-mfg-text-muted {
+    color: #64748b;
+  }
+
+  .light .text-mfg-text-secondary {
+    color: #475569;
+  }
+
+  /* Light mode background overrides */
+  .light .bg-mfg-black {
+    background-color: #f8fafc;
+  }
+
+  .light .bg-mfg-dark-gray {
+    background-color: #f1f5f9;
+  }
+
+  .light .bg-mfg-dark-gray\/50 {
+    background-color: rgba(241, 245, 249, 0.5);
+  }
+
+  .light .bg-mfg-dark-gray\/95 {
+    background-color: rgba(241, 245, 249, 0.95);
+  }
+
+  .light .bg-mfg-medium-gray {
+    background-color: #e2e8f0;
+  }
+
+  .light .bg-mfg-medium-gray\/80 {
+    background-color: rgba(226, 232, 240, 0.8);
+  }
+
+  .light .bg-mfg-medium-gray\/90 {
+    background-color: rgba(226, 232, 240, 0.9);
+  }
+
+  .light .bg-mfg-light-gray {
+    background-color: #e2e8f0 !important;
+  }
+
+  .light [class*="bg-mfg-light-gray"] {
+    background-color: #e2e8f0 !important;
+  }
+
+  .light [class*="bg-mfg-dark-gray"] {
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Light mode icon overrides - ensure SVG icons are visible */
+  .light svg.text-mfg-text-muted,
+  .light .text-mfg-text-muted svg {
+    color: #475569;
+  }
+
+  .light svg.text-white,
+  .light .text-white svg {
+    color: #1e293b;
+  }
+
+  /* Light mode border overrides */
+  .light .border-mfg-border {
+    border-color: #cbd5e1;
+  }
+
+  .light .border-mfg-border\/50 {
+    border-color: rgba(203, 213, 225, 0.5);
+  }
+
+  .light [class*="border-mfg-border"] {
+    border-color: #cbd5e1;
   }
 
   /* Status Badges */
@@ -173,13 +309,22 @@
     box-shadow: 0 0 30px rgba(168, 85, 247, 0.35);
   }
 
-  /* Mesh Background */
-  .bg-mesh {
+  /* Mesh Background - Dark */
+  .dark .bg-mesh {
     background-image: 
       radial-gradient(at 40% 20%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
       radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.06) 0px, transparent 50%),
       radial-gradient(at 0% 50%, rgba(168, 85, 247, 0.05) 0px, transparent 50%),
       radial-gradient(at 90% 80%, rgba(16, 185, 129, 0.04) 0px, transparent 50%);
+  }
+
+  /* Mesh Background - Light */
+  .light .bg-mesh {
+    background-image: 
+      radial-gradient(at 40% 20%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(168, 85, 247, 0.03) 0px, transparent 50%),
+      radial-gradient(at 90% 80%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
   }
 
   /* Shimmer Animation */
@@ -194,6 +339,16 @@
     animation: shimmer 2s infinite;
   }
 
+  .light .shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.05) 50%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    background-size: 200% 100%;
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -202,5 +357,46 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Light mode table styles */
+  .light .table-header {
+    @apply bg-slate-100/50 text-slate-600;
+  }
+
+  .light .table-cell {
+    @apply text-slate-800;
+  }
+
+  .light .table-row {
+    @apply border-slate-200/50 hover:bg-slate-50;
+  }
+
+  /* Light mode input styles */
+  .light .input-primary {
+    @apply bg-white border-slate-200 text-slate-800 placeholder-slate-400;
+  }
+
+  .light .select-primary {
+    @apply bg-white border-slate-200 text-slate-800;
+  }
+
+  /* Light mode gradient backgrounds for icon containers */
+  .light .bg-gradient-to-br.from-mfg-medium-gray.to-mfg-light-gray {
+    background: linear-gradient(to bottom right, #e2e8f0, #cbd5e1);
+  }
+
+  .light .from-mfg-medium-gray {
+    --tw-gradient-from: #e2e8f0;
+  }
+
+  .light .to-mfg-light-gray {
+    --tw-gradient-to: #cbd5e1;
+  }
+
+  /* Light mode for option elements in dropdowns */
+  .light option {
+    background-color: #ffffff;
+    color: #1e293b;
   }
 }

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCustomerVehicles } from '@/hooks/useCustomerVehicles';
 import { useState } from 'react';
 import { Car, Calendar, History, User, Menu, X, Bell } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const Header = () => {
   const location = useLocation();
@@ -104,6 +105,11 @@ export const Header = () => {
               <Bell className="w-5 h-5 text-customer-text-muted" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-tesla-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">2</span>
             </motion.button>
+
+            {/* Theme Toggle */}
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
 
             {/* User Avatar */}
             <motion.div

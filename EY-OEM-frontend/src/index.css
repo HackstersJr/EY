@@ -6,31 +6,63 @@
 
 @layer base {
     * {
-        @apply border-oem-border;
+        @apply border-oem-border dark:border-oem-border;
     }
 
-    body {
+    /* Dark mode (default) */
+    .dark body {
         @apply bg-oem-black text-white font-sans antialiased;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
+    /* Light mode */
+    .light body {
+        @apply bg-slate-50 text-slate-800 font-sans antialiased;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        @apply font-sans antialiased;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Custom Scrollbar - Dark */
+    .dark ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
 
-    ::-webkit-scrollbar-track {
+    .dark ::-webkit-scrollbar-track {
         @apply bg-oem-dark-gray;
     }
 
-    ::-webkit-scrollbar-thumb {
+    .dark ::-webkit-scrollbar-thumb {
         @apply bg-oem-light-gray rounded-full;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
+    .dark ::-webkit-scrollbar-thumb:hover {
         @apply bg-oem-text-muted;
+    }
+
+    /* Custom Scrollbar - Light */
+    .light ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .light ::-webkit-scrollbar-track {
+        @apply bg-slate-100;
+    }
+
+    .light ::-webkit-scrollbar-thumb {
+        @apply bg-slate-300 rounded-full;
+    }
+
+    .light ::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-400;
     }
 
     /* Selection styling */
@@ -38,24 +70,128 @@
         background: rgba(51, 129, 252, 0.35);
         color: #ffffff;
     }
+
+    .light ::selection {
+        background: rgba(51, 129, 252, 0.35);
+        color: #1e293b;
+    }
+
+    /* Theme background utility */
+    .dark .theme-bg {
+        background-color: #050508;
+    }
+
+    .light .theme-bg {
+        background-color: #f8fafc;
+    }
 }
 
 @layer components {
-    /* Glass Effects */
-    .glass {
+    /* Glass Effects - Dark Mode */
+    .dark .glass {
         @apply bg-white/[0.03] backdrop-blur-xl;
     }
 
-    .glass-card {
+    .dark .glass-card {
         @apply bg-oem-medium-gray/80 backdrop-blur-xl border border-oem-border rounded-2xl shadow-inner-glow;
     }
 
-    .glass-strong {
+    .dark .glass-strong {
         @apply bg-oem-medium-gray/90 backdrop-blur-xl border border-oem-border;
     }
 
-    .glass-panel {
+    .dark .glass-panel {
         @apply bg-oem-dark-gray/95 backdrop-blur-2xl border border-oem-border;
+    }
+
+    /* Glass Effects - Light Mode */
+    .light .glass {
+        @apply bg-white/70 backdrop-blur-xl;
+    }
+
+    .light .glass-card {
+        @apply bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-sm;
+    }
+
+    .light .glass-strong {
+        @apply bg-white/95 backdrop-blur-xl border border-slate-200;
+    }
+
+    .light .glass-panel {
+        @apply bg-white/95 backdrop-blur-2xl border border-slate-200;
+    }
+
+    /* Light mode text overrides */
+    .light .text-white {
+        color: #1e293b;
+    }
+
+    .light .text-oem-text-muted {
+        color: #64748b;
+    }
+
+    .light .text-oem-text-secondary {
+        color: #475569;
+    }
+
+    .light .bg-oem-black {
+        background-color: #f8fafc;
+    }
+
+    .light .bg-oem-dark-gray {
+        background-color: #f1f5f9;
+    }
+
+    .light .bg-oem-dark-gray\/30 {
+        background-color: rgba(241, 245, 249, 0.3);
+    }
+
+    .light .bg-oem-dark-gray\/50 {
+        background-color: rgba(241, 245, 249, 0.5);
+    }
+
+    .light .bg-oem-dark-gray\/95 {
+        background-color: rgba(241, 245, 249, 0.95);
+    }
+
+    .light .bg-oem-medium-gray {
+        background-color: #e2e8f0;
+    }
+
+    .light .bg-oem-light-gray {
+        background-color: #e2e8f0 !important;
+    }
+
+    .light [class*="bg-oem-light-gray"] {
+        background-color: #e2e8f0 !important;
+    }
+
+    .light [class*="bg-oem-dark-gray"] {
+        background-color: #f1f5f9 !important;
+    }
+
+    /* Light mode icon overrides - ensure SVG icons are visible */
+    .light svg.text-oem-text-muted,
+    .light .text-oem-text-muted svg {
+        color: #475569;
+    }
+
+    .light svg.text-white,
+    .light .text-white svg {
+        color: #1e293b;
+    }
+
+    /* Light mode border overrides */
+    .light .border-oem-border {
+        border-color: #cbd5e1;
+    }
+
+    .light .border-oem-border\/50 {
+        border-color: rgba(203, 213, 225, 0.5);
+    }
+
+    .light [class*="border-oem-border"] {
+        border-color: #cbd5e1;
     }
 
     /* Status Badges */
@@ -186,13 +322,22 @@
         box-shadow: 0 0 32px rgba(139, 92, 246, 0.4);
     }
 
-    /* Mesh Background */
-    .bg-mesh {
+    /* Mesh Background - Dark */
+    .dark .bg-mesh {
         background-image: 
             radial-gradient(at 40% 20%, rgba(51, 129, 252, 0.08) 0px, transparent 50%),
             radial-gradient(at 80% 0%, rgba(20, 184, 166, 0.06) 0px, transparent 50%),
             radial-gradient(at 0% 50%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
             radial-gradient(at 90% 80%, rgba(51, 129, 252, 0.04) 0px, transparent 50%);
+    }
+
+    /* Mesh Background - Light */
+    .light .bg-mesh {
+        background-image: 
+            radial-gradient(at 40% 20%, rgba(51, 129, 252, 0.05) 0px, transparent 50%),
+            radial-gradient(at 80% 0%, rgba(20, 184, 166, 0.04) 0px, transparent 50%),
+            radial-gradient(at 0% 50%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
+            radial-gradient(at 90% 80%, rgba(51, 129, 252, 0.03) 0px, transparent 50%);
     }
 
     /* Shimmer Animation */
@@ -205,6 +350,16 @@
         );
         background-size: 200% 100%;
         animation: shimmer 2.5s infinite;
+    }
+
+    .light .shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.05) 50%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        background-size: 200% 100%;
     }
 
     /* Hide scrollbar but keep functionality */
@@ -220,5 +375,59 @@
     /* Focus ring utility */
     .focus-ring {
         @apply focus:outline-none focus:ring-2 focus:ring-oem-blue-500/50 focus:ring-offset-2 focus:ring-offset-oem-black;
+    }
+
+    .light .focus-ring {
+        @apply focus:ring-offset-white;
+    }
+
+    /* Light mode table styles */
+    .light .table-header {
+        @apply bg-slate-100/50 text-slate-600;
+    }
+
+    .light .table-cell {
+        @apply text-slate-800;
+    }
+
+    .light .table-row {
+        @apply border-slate-200/50 hover:bg-slate-50;
+    }
+
+    /* Light mode input styles */
+    .light .input-primary {
+        @apply bg-white border-slate-200 text-slate-800 placeholder-slate-400;
+    }
+
+    .light .select-primary {
+        @apply bg-white border-slate-200 text-slate-800;
+    }
+
+    /* Light mode section styles */
+    .light .section-title {
+        @apply text-slate-800;
+    }
+
+    .light .section-subtitle {
+        @apply text-slate-500;
+    }
+
+    /* Light mode gradient backgrounds for icon containers */
+    .light .bg-gradient-to-br.from-oem-medium-gray.to-oem-light-gray {
+        background: linear-gradient(to bottom right, #e2e8f0, #cbd5e1);
+    }
+
+    .light .from-oem-medium-gray {
+        --tw-gradient-from: #e2e8f0;
+    }
+
+    .light .to-oem-light-gray {
+        --tw-gradient-to: #cbd5e1;
+    }
+
+    /* Light mode for option elements in dropdowns */
+    .light option {
+        background-color: #ffffff;
+        color: #1e293b;
     }
 }
