@@ -1,0 +1,269 @@
+{
+    "name": "Master Agent Orchestrator",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gemini-pro",
+                "options": {
+                    "temperature": 0.1
+                }
+            },
+            "id": "gemini-chat-model",
+            "name": "Google Gemini Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                300,
+                500
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "GOOGLE_API_KEY_CREDENTIAL_ID",
+                    "name": "Google Gemini Api Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.body.query }}",
+                "options": {
+                    "systemMessage": "You are the Master Agent of an automotive predictive maintenance platform.\nYour job is to route the user's request to the correct specialized agent.\n\nAvailable Agents:\n1. \"diagnosis\": For identifying vehicle faults, interpreting warning lights, or technical issues.\n2. \"scheduling\": For booking service appointments or checking workshop availability.\n3. \"data_analysis\": For checking vehicle health status, telemetry, or recent alerts.\n4. \"customer\": For general questions, greetings, or non-technical queries.\n5. \"manufacturing\": For OEM/Manufacturing insights, defect trends, or root cause analysis.\n\nOutput a JSON object ONLY:\n{\n  \"agent\": \"<agent_name>\",\n  \"reason\": \"<reason>\",\n  \"parameters\": { <extracted_entities> }\n}"
+                }
+            },
+            "id": "llm-router",
+            "name": "LLM Router",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsonParse": true,
+                "jsCode": "const response = JSON.parse($input.first().json.text);\nreturn { json: response };"
+            },
+            "id": "parse-decision",
+            "name": "Parse Decision",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "dataType": "string",
+                "value1": "={{ $json.agent }}",
+                "rules": {
+                    "rules": [
+                        {
+                            "value2": "diagnosis",
+                            "output": 0
+                        },
+                        {
+                            "value2": "scheduling",
+                            "output": 1
+                        },
+                        {
+                            "value2": "data_analysis",
+                            "output": 2
+                        },
+                        {
+                            "value2": "manufacturing",
+                            "output": 3
+                        }
+                    ]
+                },
+                "fallbackOutput": 4
+            },
+            "id": "route-switch",
+            "name": "Route Switch",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3,
+            "position": [
+                1100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"master_decision\": {{ JSON.stringify($json) }},\n  \"agent_result\": { \"message\": \"Diagnosis Agent Placeholder: I see you have an issue. (Workflow to be implemented)\" }\n}",
+                "options": {}
+            },
+            "id": "diagnosis-response",
+            "name": "Diagnosis Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"master_decision\": {{ JSON.stringify($json) }},\n  \"agent_result\": { \"message\": \"Scheduling Agent Placeholder: When would you like to come in?\" }\n}",
+                "options": {}
+            },
+            "id": "scheduling-response",
+            "name": "Scheduling Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"master_decision\": {{ JSON.stringify($json) }},\n  \"agent_result\": { \"message\": \"Data Agent Placeholder: Vehicle health is 85%.\" }\n}",
+                "options": {}
+            },
+            "id": "data-response",
+            "name": "Data Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"master_decision\": {{ JSON.stringify($json) }},\n  \"agent_result\": { \"message\": \"Manufacturing Agent Placeholder: Defect trends are stable.\" }\n}",
+                "options": {}
+            },
+            "id": "manufacturing-response",
+            "name": "Manufacturing Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                700
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"master_decision\": {{ JSON.stringify($json) }},\n  \"agent_result\": { \"message\": \"Customer Agent: How can I help you today?\" }\n}",
+                "options": {}
+            },
+            "id": "customer-response",
+            "name": "Customer Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1400,
+                900
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "LLM Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_language_model": [
+                [
+                    {
+                        "node": "LLM Router",
+                        "type": "ai_language_model",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM Router": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Decision",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Decision": {
+            "main": [
+                [
+                    {
+                        "node": "Route Switch",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Route Switch": {
+            "main": [
+                [
+                    {
+                        "node": "Diagnosis Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Scheduling Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Data Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Manufacturing Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Customer Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

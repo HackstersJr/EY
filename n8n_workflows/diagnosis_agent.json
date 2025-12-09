@@ -1,0 +1,110 @@
+{
+    "name": "Diagnosis Agent",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/diagnosis",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gemini-pro",
+                "options": {
+                    "temperature": 0.2
+                }
+            },
+            "id": "gemini-chat-model",
+            "name": "Google Gemini Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                300,
+                500
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "GOOGLE_API_KEY_CREDENTIAL_ID",
+                    "name": "Google Gemini Api Account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.body.query }}",
+                "options": {
+                    "systemMessage": "You are a Diagnosis Agent.\nAnalyze the vehicle symptoms provided and suggest potential root causes, severity, and recommended actions.\n\nContext:\nVehicle Model: {{ $json.body.context.vehicle_model }}\nAnomalies: {{ $json.body.context.anomalies }}\n\nOutput Format:\n- Root Cause Hypothesis\n- Severity (Low/Medium/High)\n- Recommended Action"
+                }
+            },
+            "id": "diagnosis-llm",
+            "name": "Diagnosis LLM",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"diagnosis_result\": {{ $json.text }}\n}",
+                "options": {}
+            },
+            "id": "response",
+            "name": "Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                800,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Diagnosis LLM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_language_model": [
+                [
+                    {
+                        "node": "Diagnosis LLM",
+                        "type": "ai_language_model",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Diagnosis LLM": {
+            "main": [
+                [
+                    {
+                        "node": "Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

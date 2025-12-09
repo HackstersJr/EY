@@ -57,7 +57,7 @@ services:
       - ey-network
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:nightly-amd64
     ports:
       - "5678:5678"
     environment:
