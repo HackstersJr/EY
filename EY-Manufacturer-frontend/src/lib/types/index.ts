@@ -149,6 +149,7 @@ export interface ManufacturingChatRequest {
 export interface ManufacturingChatResponse {
     message: string;
     timestamp: string;
+    suggestedActions?: string[];
 }
 
 export interface ChatMessage {

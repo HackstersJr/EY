@@ -124,3 +124,15 @@ async def oem_agent(request: OEMRequest):
     # The prompt in valid agent should handle "OEM" role if configured, otherwise we need a new workflow.
     # PROPOSAL: Use a new webhook 'agent/oem' and I will create that workflow if it doesn't exist.
     return await forward_to_n8n("agent/oem-db", payload)
+
+@router.post("/agent/manufacturing")
+async def manufacturing_agent(request: ManufacturingRequest):
+    """
+    Manufacturing Insights Agent - forwards to v2 workflow
+    """
+    payload = {
+        "message": request.context.get("message") if request.context else "",
+        "query": request.context.get("message") if request.context else "",
+        "context": request.context or {}
+    }
+    return await forward_to_n8n("agent/manufacturing-v2", payload)

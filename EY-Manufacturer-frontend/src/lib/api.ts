@@ -276,7 +276,8 @@ export const sendManufacturingChatMessage = async (
     try {
         // Updated to use the explicit Manufacturing Agent endpoint
         // Explicitly pointing to manufacturing endpoint
-        const response = await axios.post(`${BASE_URL}/agent/manufacturing`, {
+        const response = await axios.post(`${BASE_URL}/agent/manufacturing-v2`, {
+            message: request.message, // Pass user query
             // Manufacturing agent currently doesn't use input, but we can send context
             context: request.context
         });
@@ -308,6 +309,7 @@ export const sendManufacturingChatMessage = async (
         return {
             message: message,
             timestamp: new Date().toISOString(),
+            suggestedActions: agentResult.suggested_questions || []
         };
     } catch (error) {
         console.error("Chat API Error:", error);

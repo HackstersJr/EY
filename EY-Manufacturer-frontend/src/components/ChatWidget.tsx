@@ -22,6 +22,7 @@ export const ChatWidget = ({ title = 'Quality Assistant', context }: ChatWidgetP
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [currentSuggestions, setCurrentSuggestions] = useState<string[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Extract context from URL if not provided
@@ -59,6 +60,7 @@ export const ChatWidget = ({ title = 'Quality Assistant', context }: ChatWidgetP
 
         setMessages((prev) => [...prev, userMessage]);
         setInputText('');
+        setCurrentSuggestions([]);
         setIsTyping(true);
 
         try {
@@ -75,6 +77,9 @@ export const ChatWidget = ({ title = 'Quality Assistant', context }: ChatWidgetP
             };
 
             setMessages((prev) => [...prev, assistantMessage]);
+            if (response.suggestedActions && response.suggestedActions.length > 0) {
+                setCurrentSuggestions(response.suggestedActions);
+            }
         } catch (error) {
             console.error('Failed to send message:', error);
             const errorMessage: ChatMessage = {
@@ -221,6 +226,23 @@ export const ChatWidget = ({ title = 'Quality Assistant', context }: ChatWidgetP
                                                 <span className="text-sm text-mfg-text-muted">Analyzing...</span>
                                             </div>
                                         </motion.div>
+                                    )}
+
+                                    {currentSuggestions.length > 0 && !isTyping && (
+                                        <div className="flex flex-wrap gap-2 justify-start ml-2 mt-2">
+                                            {currentSuggestions.map((query, idx) => (
+                                                <motion.button
+                                                    key={idx}
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: idx * 0.1 }}
+                                                    onClick={() => setInputText(query)}
+                                                    className="px-3 py-1.5 text-xs bg-mfg-emerald-600/10 hover:bg-mfg-emerald-600/20 text-mfg-emerald-400 border border-mfg-emerald-500/20 rounded-lg transition-all"
+                                                >
+                                                    {query}
+                                                </motion.button>
+                                            ))}
+                                        </div>
                                     )}
 
                                     <div ref={messagesEndRef} />
