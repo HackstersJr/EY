@@ -46,6 +46,7 @@ export const ChatWidget = ({ title = 'AI Assistant', vehicleId, issueId }: ChatW
       const response = await sendCustomerChatMessage({
         message: messageText,
         vehicleId: vehicleId || '',
+        issueId: issueId,
       });
       
       const assistantMessage: ChatMessage = {
