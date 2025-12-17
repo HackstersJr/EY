@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { sendManufacturingChatMessage } from '@/lib/manufacturerApi';
+import { sendManufacturingChatMessage } from '@/lib/api';
 import type { ChatMessage, TimeRange, Region } from '@/lib/types';
 import { MessageCircle, X, Send, Loader2, Sparkles, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -201,8 +201,8 @@ export const ChatWidget = ({ title = 'Quality Assistant', context }: ChatWidgetP
                                         >
                                             <div
                                                 className={`max-w-[85%] rounded-2xl px-4 py-3 ${msg.role === 'user'
-                                                        ? 'bg-gradient-to-br from-mfg-emerald-600 to-mfg-cyan-600 text-white'
-                                                        : 'bg-mfg-light-gray text-white'
+                                                    ? 'bg-gradient-to-br from-mfg-emerald-600 to-mfg-cyan-600 text-white'
+                                                    : 'bg-mfg-light-gray text-white'
                                                     }`}
                                             >
                                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>

@@ -17,6 +17,7 @@ origins = [
     "http://localhost:3000", # Customer Frontend
     "http://localhost:3001", # OEM Frontend
     "http://localhost:3002", # Manufacturer Frontend
+    "http://localhost:3005", # Manufacturer Frontend (New Port)
 ]
 
 app.add_middleware(

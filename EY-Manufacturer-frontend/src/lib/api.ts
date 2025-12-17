@@ -275,6 +275,7 @@ export const sendManufacturingChatMessage = async (
 ): Promise<ManufacturingChatResponse> => {
     try {
         // Updated to use the explicit Manufacturing Agent endpoint
+        // Explicitly pointing to manufacturing endpoint
         const response = await axios.post(`${BASE_URL}/agent/manufacturing`, {
             // Manufacturing agent currently doesn't use input, but we can send context
             context: request.context

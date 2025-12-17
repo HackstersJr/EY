@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getManufacturingLocations } from '@/lib/manufacturerApi';
+import { getManufacturingLocations } from '@/lib/api';
 import type { ManufacturingLocationsParams } from '@/lib/types';
 
 export const useManufacturingLocations = (params?: ManufacturingLocationsParams) => {

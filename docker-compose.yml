@@ -5,7 +5,7 @@ services:
   manufacturer-frontend:
     build: ./EY-Manufacturer-frontend
     ports:
-      - "3002:80"
+      - "3005:80"
     networks:
       - ey-network
     depends_on:

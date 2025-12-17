@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getManufacturingOverview } from '@/lib/manufacturerApi';
+import { getManufacturingOverview } from '@/lib/api';
 import type { ManufacturingOverviewParams } from '@/lib/types';
 
 export const useManufacturingOverview = (params?: ManufacturingOverviewParams) => {
