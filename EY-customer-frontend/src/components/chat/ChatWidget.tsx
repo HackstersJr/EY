@@ -37,40 +37,56 @@ export const ChatWidget = ({ title = 'AI Assistant', vehicleId }: ChatWidgetProp
       text: messageText,
       timestamp: new Date().toISOString(),
     };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputText('');
+    setIsTyping(true);
+    setCurrentSuggestions([]);
+
+    try {
+      const response = await sendCustomerChatMessage({
+        message: messageText,
+        vehicleId: vehicleId || '',
+      });
+      
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        text: response.message,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      if (response.suggestedActions && response.suggestedActions.length > 0) {
+        setCurrentSuggestions(response.suggestedActions);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        text: 'I apologize, but I encountered an error processing your request. Please try again.',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  setMessages((prev) => [...prev, assistantMessage]);
-  if (response.suggestedActions && response.suggestedActions.length > 0) {
-    setCurrentSuggestions(response.suggestedActions);
-  }
-} catch (error) {
-  console.error('Failed to send message:', error);
-  const errorMessage: ChatMessage = {
-    role: 'assistant',
-    text: 'I apologize, but I encountered an error processing your request. Please try again.',
-    timestamp: new Date().toISOString(),
-  };
-  setMessages((prev) => [...prev, errorMessage]);
-} finally {
-  setIsTyping(false);
-}
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
-const handleKeyPress = (e: React.KeyboardEvent) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    handleSendMessage();
-  }
-};
+  const suggestedQueries = [
+    'Check my vehicle health',
+    'Schedule a service',
+    'Recent diagnostics',
+    'Maintenance tips',
+  ];
 
-const suggestedQueries = [
-  'Check my vehicle health',
-  'Schedule a service',
-  'Recent diagnostics',
-  'Maintenance tips',
-];
-
-return (
+  return (
   <>
     {/* Chat Toggle Button */}
     <AnimatePresence>
