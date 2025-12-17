@@ -197,8 +197,8 @@ export const ChatWidget = ({ title = 'OEM AI Assistant', context }: ChatWidgetPr
                                         >
                                             <div
                                                 className={`max-w-[85%] rounded-2xl px-4 py-3 ${msg.role === 'user'
-                                                        ? 'bg-gradient-to-br from-oem-blue-600 to-oem-teal-600 text-white'
-                                                        : 'bg-oem-light-gray text-white'
+                                                    ? 'bg-gradient-to-br from-oem-blue-600 to-oem-teal-600 text-white'
+                                                    : 'bg-oem-light-gray text-white'
                                                     }`}
                                             >
                                                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>

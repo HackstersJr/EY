@@ -30,6 +30,7 @@ class FeedbackRequest(BaseModel):
     comments: str
 
 class ManufacturingRequest(BaseModel):
+    message: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
 class OEMRequest(BaseModel):
@@ -131,8 +132,20 @@ async def manufacturing_agent(request: ManufacturingRequest):
     Manufacturing Insights Agent - forwards to v2 workflow
     """
     payload = {
-        "message": request.context.get("message") if request.context else "",
-        "query": request.context.get("message") if request.context else "",
+        "message": request.message or "",
+        "query": request.message or "",
+        "context": request.context or {}
+    }
+    return await forward_to_n8n("agent/manufacturing-v2", payload)
+
+@router.post("/agent/manufacturing-v2")
+async def manufacturing_agent_v2(request: ManufacturingRequest):
+    """
+    Manufacturing Insights Agent V2 - with query awareness and suggestions
+    """
+    payload = {
+        "message": request.message or "",
+        "query": request.message or "",
         "context": request.context or {}
     }
     return await forward_to_n8n("agent/manufacturing-v2", payload)

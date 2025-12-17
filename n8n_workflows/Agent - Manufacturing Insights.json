@@ -42,7 +42,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const defects = $input.all().map(item => item.json);\nreturn { json: { defects } };"
+                "jsCode": "const defects = $input.all().map(item => item.json);\nconst webhookData = $('Webhook Trigger').first().json.body;\nreturn { json: { defects, webhookData } };"
             },
             "id": "aggregate-defects",
             "name": "Aggregate Defects",
@@ -63,7 +63,7 @@
                 "messages": {
                     "values": [
                         {
-                            "content": "=Analyze the following vehicle defect records to answer the user request: '{{ $('Webhook Trigger').item.json.body.message || $('Webhook Trigger').item.json.body.query }}'.\n\nData: {{ JSON.stringify($json.defects) }}\n\nProvide a JSON summary with keys: 'top_defects', 'root_cause_analysis', 'recommended_actions' (list of strings), and 'suggested_questions' (list of 3 short follow-up questions relevant to the analysis)."
+                            "content": "=Analyze the following vehicle defect records to answer the user request: '{{ $json.webhookData.message || $json.webhookData.query }}'.\n\nData: {{ JSON.stringify($json.defects) }}\n\nProvide a JSON summary with keys: 'top_defects', 'root_cause_analysis', 'recommended_actions' (list of strings), and 'suggested_questions' (list of 3 short follow-up questions relevant to the analysis)."
                         }
                     ]
                 },

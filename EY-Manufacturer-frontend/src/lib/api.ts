@@ -282,32 +282,59 @@ export const sendManufacturingChatMessage = async (
             context: request.context
         });
 
-        // Agent returns { top_defects: [...], root_cause_analysis: {...}, recommended_actions: [...] }
+        // Agent returns JSON with analysis results
         const agentResult = response.data;
 
-        let message = "Here is the latest manufacturing insight analysis:\n\n";
+        let message = "";
 
-        // Map Agent Keys (root_cause_analysis) to Frontend expectations if needed,
-        // or just format the string here.
-        if (agentResult.root_cause_analysis && agentResult.root_cause_analysis.primary_issue) {
-            message += `**Root Cause Analysis:** ${agentResult.root_cause_analysis.primary_issue}\n${agentResult.root_cause_analysis.details || ''}\n\n`;
+        // Format Root Cause Analysis
+        if (agentResult.root_cause_analysis) {
+            message += `## 🔍 Root Cause Analysis\n\n`;
+            if (typeof agentResult.root_cause_analysis === 'string') {
+                message += `${agentResult.root_cause_analysis}\n\n`;
+            } else if (agentResult.root_cause_analysis.primary_issue) {
+                message += `**Primary Issue:** ${agentResult.root_cause_analysis.primary_issue}\n\n`;
+                if (agentResult.root_cause_analysis.details) {
+                    message += `${agentResult.root_cause_analysis.details}\n\n`;
+                }
+            }
         }
 
-        if (agentResult.top_defects && agentResult.top_defects.length > 0) {
-            message += `**Top Defects:**\n${agentResult.top_defects.map((d: { defect_name: string; count: number }) => `• ${d.defect_name} (${d.count} incidents)`).join('\n')}\n\n`;
+        // Format Top Defects
+        if (agentResult.top_defects && Array.isArray(agentResult.top_defects) && agentResult.top_defects.length > 0) {
+            message += `## 📊 Top Defects\n\n`;
+            agentResult.top_defects.forEach((defect: any) => {
+                if (typeof defect === 'string') {
+                    message += `• ${defect}\n`;
+                } else if (defect.defect_name || defect.component) {
+                    const name = defect.defect_name || defect.component || 'Unknown';
+                    const count = defect.count || defect.incidents || '';
+                    message += `• **${name}**${count ? ` - ${count} incidents` : ''}\n`;
+                }
+            });
+            message += `\n`;
         }
 
-        if (agentResult.recommended_actions && agentResult.recommended_actions.length > 0) {
-            message += `**Recommendations:**\n${agentResult.recommended_actions.map((r: string) => `• ${r}`).join('\n')}`;
+        // Format Recommendations
+        if (agentResult.recommended_actions && Array.isArray(agentResult.recommended_actions) && agentResult.recommended_actions.length > 0) {
+            message += `## ✅ Recommended Actions\n\n`;
+            agentResult.recommended_actions.forEach((action: string, idx: number) => {
+                message += `${idx + 1}. ${action}\n`;
+            });
+            message += `\n`;
         }
 
-        // Fallback dump
-        if (!agentResult.root_cause_analysis && !agentResult.top_defects) {
-            message = "No insights available at this time. (Debug: " + JSON.stringify(agentResult) + ")";
+        // Fallback: If no structured data, try to display the raw response nicely
+        if (!message.trim()) {
+            if (typeof agentResult === 'string') {
+                message = agentResult;
+            } else {
+                message = "## Analysis Results\n\n" + JSON.stringify(agentResult, null, 2);
+            }
         }
 
         return {
-            message: message,
+            message: message.trim(),
             timestamp: new Date().toISOString(),
             suggestedActions: agentResult.suggested_questions || []
         };
