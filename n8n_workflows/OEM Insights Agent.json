@@ -1,0 +1,100 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/oem",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                832,
+                -272
+            ],
+            "id": "68405832-08d1-4426-b51c-c0e6aeb7e90d",
+            "name": "Webhook Trigger",
+            "webhookId": "cf4a462f-c857-4726-8910-6fa5507a469a"
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-flash-latest",
+                    "mode": "list",
+                    "cachedResultName": "models/gemini-flash-latest"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "content": "={{ $json.body.query }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "temperature": 0.3
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1136,
+                -160
+            ],
+            "id": "f88e5f1c-c3b4-4c11-a8e8-518bf1292ec1",
+            "name": "Gemini Chat",
+            "alwaysOutputData": true,
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "KmripA9dfAZsJkr0",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "={{ $json.content.parts[0].text }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1472,
+                -176
+            ],
+            "id": "82011961-4123-493b-baee-6e1011899429",
+            "name": "Respond to Webhook"
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Chat",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Chat": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}

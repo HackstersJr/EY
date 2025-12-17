@@ -32,6 +32,10 @@ class FeedbackRequest(BaseModel):
 class ManufacturingRequest(BaseModel):
     context: Optional[Dict[str, Any]] = None
 
+class OEMRequest(BaseModel):
+    query: str
+    context: Optional[Dict[str, Any]] = None
+
 # --- Helper Function ---
 
 async def forward_to_n8n(endpoint: str, payload: dict):
@@ -51,7 +55,11 @@ async def forward_to_n8n(endpoint: str, payload: dict):
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Failed to connect to n8n: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Catch JSON decode errors or other issues
+        error_detail = str(e)
+        if 'response' in locals() and response:
+             error_detail += f" | Response Body: {response.text[:500]}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 # --- Endpoints ---
 
@@ -94,3 +102,25 @@ async def manufacturing_agent(request: ManufacturingRequest):
     Manufacturing Insights Agent
     """
     return await forward_to_n8n("agent/manufacturing", request.dict() if request else {})
+
+@router.post("/agent/oem")
+async def oem_agent(request: OEMRequest):
+    """
+    OEM Insights Agent (Proxies to Analysis Agent with OEM context or specific OEM workflow)
+    For now, reusing Data Analysis workflow but passing query as 'message'
+    """
+    # We might need a specific OEM workflow in n8n, but let's try to reuse analysis or chat 
+    # If we reuse Analysis, it expects 'vehicle_id'. 
+    # Let's route to the Master Agent (chat) but with context=OEM so it can decide.
+    # Actually, let's assume we reuse the Chat Agent but with role=OEM.
+    
+    payload = {
+        "query": request.query,
+        "message": request.query,
+        "role": "OEM_ANALYST", 
+        "context": request.context or {}
+    }
+    # Using the same webhook as customer chat for now to get AI response capability
+    # The prompt in valid agent should handle "OEM" role if configured, otherwise we need a new workflow.
+    # PROPOSAL: Use a new webhook 'agent/oem' and I will create that workflow if it doesn't exist.
+    return await forward_to_n8n("agent/oem", payload)

@@ -10,8 +10,11 @@ import type {
   OEMChatRequest,
   OEMChatResponse,
 } from './types';
+import axios from 'axios';
 
-// Mock data generators
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+
+// Mock data generators (Kept for Dashboard)
 
 const MOCK_MODELS = [
   { modelId: 'porsche-911', modelName: 'Porsche 911' },
@@ -239,32 +242,28 @@ export const getOEMServiceCenterDetail = async (id: string): Promise<OEMServiceC
  * Send OEM Chat Message
  */
 export const sendOEMChatMessage = async (request: OEMChatRequest): Promise<OEMChatResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  try {
+    // Forward to Backend OEM Agent endpoint
+    const response = await axios.post(`${BASE_URL}/agent/oem`, {
+      query: request.message,
+      context: {
+        agent_type: 'oem_insights',
+        ...request.context
+      }
+    });
 
-  const { message } = request;
-  const lowerMessage = message.toLowerCase();
+    // n8n returns { response: "AI Answer" } usually
+    const agentResponse = response.data.response || response.data.text || response.data.answer;
 
-  let responseText = '';
-
-  // Context-aware responses
-  if (lowerMessage.includes('failure rate') || lowerMessage.includes('highest')) {
-    responseText = `Based on current data, the Model X has the highest failure rate at 8.3%, primarily due to brake system issues concentrated in the South region. The Model 3 follows at 6.2%, with battery management alerts being the most common issue.`;
-  } else if (lowerMessage.includes('region') || lowerMessage.includes('area')) {
-    responseText = `The South region currently shows the highest incident rate with 1,184 active issues across 12,450 vehicles. This is largely attributed to brake system failures in Model X vehicles. The North region has the lowest incident rate at 4.8%.`;
-  } else if (lowerMessage.includes('forecast') || lowerMessage.includes('demand')) {
-    responseText = `For the next 7 days, we're forecasting approximately 1,050 service appointments. Peak demand is expected on Tuesday and Wednesday. I recommend ensuring the South Bay and Central Service Point centers are fully staffed during this period.`;
-  } else if (lowerMessage.includes('component') || lowerMessage.includes('part')) {
-    responseText = `The top three components requiring attention are: 1) Brake Systems (18% of all issues), 2) Battery Management Systems (15%), and 3) Suspension components (12%). Brake system issues have increased by 3% over the past 30 days.`;
-  } else if (lowerMessage.includes('service center') || lowerMessage.includes('utilization')) {
-    responseText = `Currently, 3 service centers are at high utilization (>85%). The West End Station is at 92% capacity. Consider routing non-urgent cases to the North Plaza Center, which is at 68% utilization.`;
-  } else if (lowerMessage.includes('trend') || lowerMessage.includes('increasing')) {
-    responseText = `Model X issues are trending up (+12% over 30 days), primarily in brake systems. Model S and Model Y are stable, while Model 3 shows a slight decrease (-4%). The Cybertruck has limited data but shows promising reliability so far.`;
-  } else {
-    responseText = `I can help you analyze fleet performance, regional trends, component failure rates, service center utilization, and forecasted demand. What specific metrics would you like to explore?`;
+    return {
+      message: agentResponse || "I didn't receive a clear response from the global insight engine.",
+      timestamp: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("OEM Chat API Error:", error);
+    return {
+      message: "I'm having trouble connecting to the OEM insights database.",
+      timestamp: new Date().toISOString(),
+    };
   }
-
-  return {
-    message: responseText,
-    timestamp: new Date().toISOString(),
-  };
 };

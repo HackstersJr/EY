@@ -1,0 +1,7 @@
+INFO:     Started server process [1]
+INFO:     172.21.0.1:46298 - "OPTIONS /api/agent/chat HTTP/1.1" 200 OK
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     172.21.0.1:46298 - "POST /api/agent/chat HTTP/1.1" 500 Internal Server Error
+INFO:     172.21.0.1:51632 - "POST /api/agent/chat HTTP/1.1" 500 Internal Server Error

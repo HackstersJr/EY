@@ -37,6 +37,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:password@db/ey_telematics_db
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - PYTHONUNBUFFERED=1
     depends_on:
       - db
     networks:
@@ -61,7 +62,7 @@ services:
     ports:
       - "5678:5678"
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_ACTIVE=false
       - N8N_BASIC_AUTH_USER=admin
       - N8N_BASIC_AUTH_PASSWORD=password
       - WEBHOOK_URL=http://localhost:5678/
