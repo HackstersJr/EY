@@ -102,6 +102,7 @@ export interface OEMChatRequest {
 export interface OEMChatResponse {
   message: string;
   timestamp: string;
+  suggestedActions?: string[];
 }
 
 export interface ChatMessage {
