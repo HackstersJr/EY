@@ -9,7 +9,7 @@ import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.database import SessionLocal
-from models.schema import User, Vehicle, PredictedIssue, Appointment
+from models.schema import User, Vehicle, PredictedIssue, Appointment, ServiceRecord, RCACAPARecord
 
 fake = Faker()
 
@@ -75,6 +75,7 @@ def generate_data():
     # Create Appointments (Service Bookings)
     print("Generating Appointments...")
     statuses = ['CONFIRMED', 'COMPLETED', 'CANCELLED']
+    appointments = []
     for _ in range(15):
         vehicle = random.choice(vehicles)
         appt = Appointment(
@@ -82,11 +83,44 @@ def generate_data():
             vehicle_id=vehicle.id,
             user_id=vehicle.user_id,
             service_center_id=f"CENTER-{random.randint(1, 5)}",
-            appointment_date=datetime.now() + timedelta(days=random.randint(1, 30)),
+            appointment_date=datetime.now() - timedelta(days=random.randint(0, 5)), # Recent appointments for RCA
             status=random.choice(statuses),
             confirmation_code=fake.bothify(text='APT-####')
         )
         db.add(appt)
+        appointments.append(appt)
+    db.commit()
+
+    # Create Service Records & RCA/CAPA
+    print("Generating Service Records & RCA/CAPA...")
+    for appt in appointments:
+        if appt.status == 'COMPLETED':
+            # Service Record
+            record = ServiceRecord(
+                id=str(uuid.uuid4()),
+                appointment_id=appt.id,
+                vehicle_id=appt.vehicle_id,
+                actual_issues_found="Brake pads worn out",
+                parts_replaced={"pads": "front_left"},
+                time_taken_hours=2.5,
+                technician_notes="Replaced pads, checked fluid.",
+                customer_satisfaction=4.5
+            )
+            db.add(record)
+            
+            # RCA/CAPA Record (Recent)
+            rca = RCACAPARecord(
+                id=str(uuid.uuid4()),
+                service_record_id=record.id,
+                vehicle_id=appt.vehicle_id,
+                component="BRAKE_PADS",
+                actual_finding="Uneven wear detected",
+                root_cause="Caliper misalignment",
+                rca_confidence=0.95,
+                capa_items={"action": "Realign caliper", "prevention": "Check alignment at next service"},
+                created_at=datetime.utcnow() # Created now so it matches the 24h filter
+            )
+            db.add(rca)
     db.commit()
 
     print("Data generation complete.")

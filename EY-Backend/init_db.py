@@ -1,5 +1,5 @@
 from models.database import engine, Base
-from models.schema import User, Vehicle, CleanedVehicleData, PredictedIssue, Complaint, Appointment, ServiceRecord, RCACAPARecord, UEBALog, ChatSession
+from models.schema import User, Vehicle, CleanedVehicleData, PredictedIssue, Complaint, Appointment, ServiceRecord, RCACAPARecord, UEBALog, ChatSession, ManufacturingInsight
 
 def init_db():
     print("Dropping all tables...")

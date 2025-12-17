@@ -57,7 +57,7 @@ services:
       - ey-network
 
   n8n:
-    image: n8nio/n8n:nightly-amd64
+    image: docker.n8n.io/n8nio/n8n:2.0.0
     ports:
       - "5678:5678"
     environment:

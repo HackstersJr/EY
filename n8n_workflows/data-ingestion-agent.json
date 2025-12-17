@@ -1,0 +1,207 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "data-ingestion",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "id": "6a77201c-f996-4cce-aa22-07f3bef5186a",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                512,
+                496
+            ],
+            "webhookId": "9b98a1f7-7c62-4c29-8319-2c9303eeac69"
+        },
+        {
+            "parameters": {
+                "jsCode": "const items = $input.all();\nconst validItems = [];\nconst errorItems = [];\n\nfor (const item of items) {\n  if (!item.json.vehicle_id) {\n    errorItems.push({\n      json: {\n        success: false,\n        error: 'vehicle_id is required'\n      }\n    });\n  } else {\n    validItems.push(item);\n  }\n}\n\nreturn [validItems, errorItems];"
+            },
+            "id": "f10e8ce9-08c6-4d39-bd8f-6e414f6bfe6a",
+            "name": "Validate Vehicle ID",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                736,
+                496
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ JSON.stringify($json) }}",
+                "options": {
+                    "systemMessage": "Normalize component names to snake_case and correct spelling. Return the normalized data as JSON with the same structure.",
+                    "maxIterations": 10,
+                    "returnIntermediateSteps": false,
+                    "passthroughBinaryImages": true,
+                    "enableStreaming": true
+                }
+            },
+            "id": "bac1c60d-a7ef-47cf-b7bb-2d93b14884cc",
+            "name": "Normalize Data",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3,
+            "position": [
+                960,
+                496
+            ]
+        },
+        {
+            "parameters": {
+                "schema": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "public"
+                },
+                "table": {
+                    "__rl": true,
+                    "mode": "name",
+                    "value": "cleaned_vehicle_data"
+                },
+                "columns": {
+                    "mappingMode": "autoMapInputData",
+                    "value": {},
+                    "matchingColumns": [],
+                    "schema": [],
+                    "attemptToConvertTypes": false,
+                    "convertFieldsToString": false
+                },
+                "options": {
+                    "outputColumns": [
+                        "id"
+                    ]
+                }
+            },
+            "id": "0cf2d3f4-c0b8-44f9-bb70-27cc029bb516",
+            "name": "Insert to Database",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                1312,
+                496
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "JNVJQkLkaWfkNNZr",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"success\": true,\n  \"row_id\": {{ $('Insert to Database').item.json.row_id }}\n}",
+                "options": {}
+            },
+            "id": "02f539d1-a90c-4dfb-ad97-d36e06a361ce",
+            "name": "Success Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1536,
+                496
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"success\": false,\n  \"error\": \"{{ $json.error || 'An error occurred' }}\"\n}",
+                "options": {}
+            },
+            "id": "6ca5a88e-6bfd-4555-aa4e-cc5105542bb5",
+            "name": "Error Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                512,
+                160
+            ]
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                832,
+                704
+            ],
+            "id": "65ae9b0c-95da-4281-91b1-a959b28fe5e8",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "5eQ04SGvwxzFzskm",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Validate Vehicle ID",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Validate Vehicle ID": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Normalize Data": {
+            "main": [
+                [
+                    {
+                        "node": "Insert to Database",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Insert to Database": {
+            "main": [
+                [
+                    {
+                        "node": "Success Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Normalize Data",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "98ea2407f78ec86da6efa1e20a0963e0e5312265392aded361e4f59d0b7a3288"
+    }
+}

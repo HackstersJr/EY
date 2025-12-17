@@ -157,3 +157,9 @@ class ChatSession(Base):
     messages = Column(JSONB)
     
     vehicle = relationship("Vehicle", back_populates="chat_sessions")
+
+class ManufacturingInsight(Base):
+    __tablename__ = "manufacturing_insights"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    insight_data = Column(JSONB)
+    created_at = Column(DateTime, default=datetime.utcnow)

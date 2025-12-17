@@ -1,110 +1,250 @@
 {
-    "name": "Diagnosis Agent",
     "nodes": [
         {
             "parameters": {
-                "httpMethod": "POST",
-                "path": "agent/diagnosis",
-                "responseMode": "responseNode",
-                "options": {}
+                "content": "## Agent - Diagnosis Workflow 🩺\n\nThis workflow automates vehicle diagnosis:\n\n1.  **Workflow Trigger**: Initiates the workflow, receiving a `vehicle_id` as input.\n2.  **Select Vehicle Data**: Fetches the latest 10 records for the specified `vehicle_id` from the `cleaned_vehicle_data` table.\n3.  **GPT-4o Model**: Provides the language model (GPT-4o) for the AI Agent, configured to output JSON.\n4.  **Diagnosis Agent**: Analyzes the vehicle data and predicts failure probabilities for components, outputting the results as JSON.\n5.  **Insert Predicted Issues**: Stores the AI-generated predicted issues into the `predicted_issues` database table.\n6.  **Check Severity**: Evaluates the predicted issues. If any issue has a \"HIGH\" severity, it triggers a flag for customer outreach. ",
+                "height": 450,
+                "width": 500,
+                "color": 5
             },
-            "id": "webhook-trigger",
-            "name": "Webhook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
             "position": [
-                100,
-                300
-            ]
+                -304,
+                -48
+            ],
+            "type": "n8n-nodes-base.stickyNote",
+            "name": "Workflow Explanation",
+            "id": "generated-1a17606e-430b-45b3-b06e-a3d68151a49b"
+        },
+        {
+            "parameters": {},
+            "type": "n8n-nodes-base.executeWorkflowTrigger",
+            "position": [
+                250,
+                200
+            ],
+            "name": "Workflow Trigger",
+            "id": "generated-29e6897f-7e9c-4963-8d7a-7e76e427d81f"
         },
         {
             "parameters": {
-                "model": "gemini-pro",
+                "operation": "select",
+                "schema": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "public"
+                },
+                "table": {
+                    "value": "cleaned_vehicle_data",
+                    "mode": "list"
+                },
+                "limit": 10,
+                "where": {
+                    "values": [
+                        {
+                            "column": "vehicle_id",
+                            "value": "={{ $json.vehicle_id }}"
+                        }
+                    ]
+                },
+                "sort": {
+                    "values": [
+                        {
+                            "column": "timestamp",
+                            "direction": "DESC"
+                        }
+                    ]
+                },
                 "options": {
-                    "temperature": 0.2
+                    "connectionTimeout": 30,
+                    "delayClosingIdleConnection": 0,
+                    "queryBatching": "single",
+                    "outputColumns": [],
+                    "largeNumbersOutput": "text"
                 }
             },
-            "id": "gemini-chat-model",
-            "name": "Google Gemini Chat Model",
-            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-            "typeVersion": 1,
+            "type": "n8n-nodes-base.postgres",
             "position": [
-                300,
-                500
+                500,
+                200
             ],
+            "name": "Select Vehicle Data",
+            "id": "generated-94c2a7a1-6b8e-4111-ae15-ede9af0101d5",
             "credentials": {
-                "googlePalmApi": {
-                    "id": "GOOGLE_API_KEY_CREDENTIAL_ID",
-                    "name": "Google Gemini Api Account"
+                "postgres": {
+                    "id": "JNVJQkLkaWfkNNZr",
+                    "name": "Postgres account"
                 }
             }
         },
         {
             "parameters": {
                 "promptType": "define",
-                "text": "={{ $json.body.query }}",
+                "text": "={{ JSON.stringify($json.data) }}",
+                "hasOutputParser": true,
                 "options": {
-                    "systemMessage": "You are a Diagnosis Agent.\nAnalyze the vehicle symptoms provided and suggest potential root causes, severity, and recommended actions.\n\nContext:\nVehicle Model: {{ $json.body.context.vehicle_model }}\nAnomalies: {{ $json.body.context.anomalies }}\n\nOutput Format:\n- Root Cause Hypothesis\n- Severity (Low/Medium/High)\n- Recommended Action"
+                    "systemMessage": "Analyze these records. Predict failure probability (0-1) for components. Output strictly valid JSON matching the predicted_issues schema.",
+                    "maxIterations": 10,
+                    "returnIntermediateSteps": false,
+                    "passthroughBinaryImages": true,
+                    "enableStreaming": true,
+                    "batching": {
+                        "batchSize": 1,
+                        "delayBetweenBatches": 0
+                    },
+                    "maxTokensFromMemory": 0
                 }
             },
-            "id": "diagnosis-llm",
-            "name": "Diagnosis LLM",
-            "type": "@n8n/n8n-nodes-langchain.chainLlm",
-            "typeVersion": 1,
+            "name": "Diagnosis Agent",
+            "type": "@n8n/n8n-nodes-langchain.agent",
             "position": [
-                500,
+                750,
                 300
-            ]
+            ],
+            "id": "generated-245a59d2-f851-4128-9d8c-0170297d7826"
         },
         {
             "parameters": {
-                "respondWith": "json",
-                "responseBody": "{\n  \"diagnosis_result\": {{ $json.text }}\n}",
+                "operation": "insert",
+                "table": {
+                    "mode": "list",
+                    "value": "predicted_issues"
+                },
+                "columns": {
+                    "mappingMode": "autoMapInputData",
+                    "value": {},
+                    "matchingColumns": [],
+                    "schema": [],
+                    "attemptToConvertTypes": false,
+                    "convertFieldsToString": false
+                },
+                "options": {
+                    "connectionTimeout": 30,
+                    "delayClosingIdleConnection": 0,
+                    "queryBatching": "single",
+                    "outputColumns": [],
+                    "largeNumbersOutput": "text",
+                    "skipOnConflict": false,
+                    "replaceEmptyStrings": false
+                }
+            },
+            "position": [
+                1000,
+                300
+            ],
+            "name": "Insert Predicted Issues",
+            "type": "n8n-nodes-base.postgres",
+            "id": "generated-755bb1f2-505e-499a-91d0-f7af0ec37549",
+            "credentials": {
+                "postgres": {
+                    "id": "JNVJQkLkaWfkNNZr",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "number": [
+                        {
+                            "operation": "equalTo",
+                            "value1": "={{ $json.severity }}",
+                            "value2": "HIGH"
+                        }
+                    ]
+                },
+                "options": {
+                    "ignoreCase": true,
+                    "looseTypeValidation": true
+                }
+            },
+            "name": "Check Severity",
+            "type": "n8n-nodes-base.if",
+            "position": [
+                1250,
+                300
+            ],
+            "id": "generated-475b8a86-93d4-4557-a411-59f3e52b08fa"
+        },
+        {
+            "parameters": {
                 "options": {}
             },
-            "id": "response",
-            "name": "Response",
-            "type": "n8n-nodes-base.respondToWebhook",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
             "typeVersion": 1,
             "position": [
-                800,
-                300
-            ]
+                576,
+                576
+            ],
+            "id": "0c6e3d7b-1fc9-4a8e-827c-fc3412aa5a2d",
+            "name": "Google Gemini Chat Model1",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "5eQ04SGvwxzFzskm",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
         }
     ],
     "connections": {
-        "Webhook": {
+        "Workflow Trigger": {
             "main": [
                 [
                     {
-                        "node": "Diagnosis LLM",
+                        "node": "Select Vehicle Data",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Google Gemini Chat Model": {
-            "ai_language_model": [
+        "Select Vehicle Data": {
+            "main": [
                 [
                     {
-                        "node": "Diagnosis LLM",
-                        "type": "ai_language_model",
+                        "node": "Diagnosis Agent",
+                        "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Diagnosis LLM": {
+        "Diagnosis Agent": {
             "main": [
                 [
                     {
-                        "node": "Response",
+                        "node": "Insert Predicted Issues",
                         "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Insert Predicted Issues": {
+            "main": [
+                [
+                    {
+                        "node": "Check Severity",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model1": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Diagnosis Agent",
+                        "type": "ai_languageModel",
                         "index": 0
                     }
                 ]
             ]
         }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "98ea2407f78ec86da6efa1e20a0963e0e5312265392aded361e4f59d0b7a3288"
     }
 }
