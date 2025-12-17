@@ -17,20 +17,20 @@ import type {
 const MOCK_VEHICLES: Vehicle[] = [
   {
     id: 'veh-001',
-    model: 'Model S',
-    make: 'Tesla',
+    model: '911 Carrera 4S',
+    make: 'Porsche',
     year: 2022,
-    registrationNumber: 'TN-01-AB-1234',
-    vin: '5YJSA1E14HF123456',
+    registrationNumber: 'KA-01-AB-1234',
+    vin: 'WP0AB2A91NS123456',
     customerId: 'cust-001',
   },
   {
     id: 'veh-002',
-    model: 'Civic',
-    make: 'Honda',
+    model: 'Cayenne',
+    make: 'Porsche',
     year: 2021,
-    registrationNumber: 'TN-02-CD-5678',
-    vin: '2HGFC2F59MH123456',
+    registrationNumber: 'KA-02-CD-5678',
+    vin: 'WP1AA2AY0PDA12345',
     customerId: 'cust-001',
   },
 ];
@@ -92,24 +92,24 @@ const MOCK_PREDICTED_ISSUES: Record<string, PredictedIssue[]> = {
 const MOCK_SERVICE_CENTERS: ServiceCenter[] = [
   {
     id: 'sc-001',
-    name: 'Tesla Service Center - Chennai',
-    address: '123 OMR, Chennai, TN 600096',
-    phone: '+91 44 1234 5678',
-    availableServices: ['Maintenance', 'Repairs', 'Diagnostics', 'Battery Service'],
+    name: 'Porsche Centre Bangalore',
+    address: '123 Outer Ring Road, Bangalore, KA 560103',
+    phone: '+91 80 1234 5678',
+    availableServices: ['Maintenance', 'Repairs', 'Diagnostics', 'Performance Tuning'],
   },
   {
     id: 'sc-002',
-    name: 'Premium Auto Care - Anna Nagar',
-    address: '456 Anna Nagar, Chennai, TN 600040',
-    phone: '+91 44 8765 4321',
+    name: 'Premium Auto Care - Koramangala',
+    address: '456 Koramangala, Bangalore, KA 560034',
+    phone: '+91 80 8765 4321',
     availableServices: ['Maintenance', 'Repairs', 'Tire Service'],
   },
   {
     id: 'sc-003',
-    name: 'EV Specialist Center - Velachery',
-    address: '789 Velachery Main Rd, Chennai, TN 600042',
-    phone: '+91 44 9876 5432',
-    availableServices: ['Battery Service', 'Diagnostics', 'Software Updates'],
+    name: 'Porsche Approved Service - Whitefield',
+    address: '789 Whitefield Main Rd, Bangalore, KA 560066',
+    phone: '+91 80 9876 5432',
+    availableServices: ['Performance Service', 'Diagnostics', 'Software Updates'],
   },
 ];
 
@@ -197,7 +197,7 @@ export const getAvailableTimeSlots = async (
   _date: string
 ): Promise<TimeSlot[]> => {
   await new Promise((resolve) => setTimeout(resolve, 300));
-  
+
   // Generate mock time slots
   const slots: TimeSlot[] = [
     { id: 'slot-1', time: '09:00 AM - 10:00 AM', available: true },
@@ -207,7 +207,7 @@ export const getAvailableTimeSlots = async (
     { id: 'slot-5', time: '03:00 PM - 04:00 PM', available: true },
     { id: 'slot-6', time: '04:00 PM - 05:00 PM', available: false },
   ];
-  
+
   return slots;
 };
 
@@ -215,9 +215,9 @@ export const createAppointment = async (
   input: CreateAppointmentInput
 ): Promise<Appointment> => {
   await new Promise((resolve) => setTimeout(resolve, 600));
-  
+
   const serviceCenter = MOCK_SERVICE_CENTERS.find((sc) => sc.id === input.serviceCenterId);
-  
+
   const newAppointment: Appointment = {
     id: `apt-${Date.now()}`,
     vehicleId: input.vehicleId,
@@ -232,7 +232,7 @@ export const createAppointment = async (
     notes: input.notes,
     createdAt: new Date().toISOString(),
   };
-  
+
   mockAppointments.push(newAppointment);
   return newAppointment;
 };
@@ -241,7 +241,7 @@ export const createComplaint = async (
   input: CreateComplaintInput
 ): Promise<Complaint> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  
+
   const newComplaint: Complaint = {
     id: `cmp-${Date.now()}`,
     vehicleId: input.vehicleId,
@@ -254,7 +254,7 @@ export const createComplaint = async (
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  
+
   mockComplaints.push(newComplaint);
   return newComplaint;
 };
@@ -268,11 +268,11 @@ export const sendCustomerChatMessage = async (
   input: ChatInput
 ): Promise<ChatResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 800));
-  
+
   // Generate contextual mock response based on the message
   let responseText = '';
   const lowerMessage = input.message.toLowerCase();
-  
+
   if (input.issueId) {
     const issue = MOCK_PREDICTED_ISSUES[input.vehicleId]?.find((i) => i.id === input.issueId);
     if (issue) {
@@ -283,13 +283,13 @@ export const sendCustomerChatMessage = async (
   } else if (lowerMessage.includes('battery')) {
     responseText = 'Your battery pack is in good condition with 92% health. We\'ve detected minor degradation which is normal for a vehicle of this age. Continue monitoring, and we\'ll alert you if any action is needed. Your next battery check is recommended in 6 months.';
   } else if (lowerMessage.includes('appointment') || lowerMessage.includes('book')) {
-    responseText = 'I can help you book a service appointment. We have availability at Tesla Service Center - Chennai and other partner locations. What type of service do you need, and when would you prefer to visit?';
+    responseText = 'I can help you book a service appointment. We have availability at Porsche Centre Bangalore and other partner locations. What type of service do you need, and when would you prefer to visit?';
   } else if (lowerMessage.includes('cost') || lowerMessage.includes('price')) {
     responseText = 'Based on your predicted maintenance items: Front brake pad replacement is estimated at ₹350, and suspension inspection at ₹600. These are estimates and actual costs may vary based on the final diagnosis. Would you like to schedule an inspection?';
   } else {
     responseText = 'I\'m your AI vehicle assistant. I can help you with information about your vehicle health, predicted maintenance issues, service history, and booking appointments. How can I assist you today?';
   }
-  
+
   return {
     message: responseText,
     timestamp: new Date().toISOString(),

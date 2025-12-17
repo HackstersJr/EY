@@ -14,11 +14,11 @@ import type {
 // Mock data generators
 
 const MOCK_MODELS = [
-  { modelId: 'model-x', modelName: 'Model X' },
-  { modelId: 'model-s', modelName: 'Model S' },
-  { modelId: 'model-3', modelName: 'Model 3' },
-  { modelId: 'model-y', modelName: 'Model Y' },
-  { modelId: 'cybertruck', modelName: 'Cybertruck' },
+  { modelId: 'porsche-911', modelName: 'Porsche 911' },
+  { modelId: 'porsche-cayenne', modelName: 'Porsche Cayenne' },
+  { modelId: 'porsche-taycan', modelName: 'Porsche Taycan' },
+  { modelId: 'porsche-macan', modelName: 'Porsche Macan' },
+  { modelId: 'porsche-panamera', modelName: 'Porsche Panamera' },
 ];
 
 const MOCK_REGIONS = ['North', 'South', 'East', 'West'];
