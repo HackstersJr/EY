@@ -9,7 +9,7 @@ import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.database import SessionLocal
-from models.schema import User, Vehicle, PredictedIssue, Appointment, ServiceRecord, RCACAPARecord
+from models.schema import User, Vehicle, PredictedIssue, Appointment, ServiceRecord, RCACAPARecord, CleanedVehicleData
 
 fake = Faker()
 
@@ -121,6 +121,30 @@ def generate_data():
                 created_at=datetime.utcnow() # Created now so it matches the 24h filter
             )
             db.add(rca)
+    db.commit()
+
+    # Create Cleaned Vehicle Data (Telemetry)
+    print("Generating Cleaned Vehicle Data...")
+    data_types = ['telematics', 'fault_code', 'battery_status']
+    for vehicle in vehicles:
+        for _ in range(5): # 5 records per vehicle
+            cleaned_data = CleanedVehicleData(
+                id=str(uuid.uuid4()),
+                vehicle_id=vehicle.id,
+                user_id=vehicle.user_id,
+                data_type=random.choice(data_types),
+                normalized_data={
+                    "speed": random.randint(0, 120),
+                    "rpm": random.randint(800, 4000),
+                    "battery_voltage": random.uniform(12.0, 14.5),
+                    "temperature": random.randint(20, 90)
+                },
+                confidence=random.uniform(0.9, 1.0),
+                source="telemetry_ingestion",
+                status="validated",
+                created_at=datetime.utcnow()
+            )
+            db.add(cleaned_data)
     db.commit()
 
     print("Data generation complete.")

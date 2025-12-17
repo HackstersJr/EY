@@ -1,0 +1,236 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/analysis",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "a43cf21b-3668-43bf-bdcc-1eadfba2680e",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                528,
+                -128
+            ],
+            "webhookId": "51fcd083-ec36-4c43-9b17-9f08bceadb6b"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id-1",
+                            "name": "tableName",
+                            "value": "cleaned_vehicle_data",
+                            "type": "string"
+                        },
+                        {
+                            "id": "id-2",
+                            "name": "recordLimit",
+                            "value": 50,
+                            "type": "number"
+                        }
+                    ]
+                },
+                "includeOtherFields": true,
+                "options": {}
+            },
+            "id": "40efab83-3c51-46c4-9c20-1797a597183c",
+            "name": "Workflow Configuration",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                752,
+                -128
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=SELECT * FROM {{ $('Workflow Configuration').first().json.tableName }} WHERE vehicle_id = $1 ORDER BY created_at DESC LIMIT {{ $('Workflow Configuration').first().json.recordLimit }}",
+                "options": {
+                    "queryReplacement": "={{ $json.body.vehicle_id }}"
+                }
+            },
+            "id": "abc4ae25-2e54-49f0-8f2d-2bb7c79ea718",
+            "name": "Get Vehicle Data",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                976,
+                -128
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const allData = $input.all().map(item => item.json);\n\nreturn {\n  json: {\n    vehicle_id: allData[0]?.vehicle_id || 'unknown',\n    telemetry_records: allData\n  }\n};"
+            },
+            "id": "aggregated-data-node",
+            "name": "Aggregate Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1200,
+                -128
+            ]
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "mode": "id",
+                    "value": "gemini-1.5-pro"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "content": "=Analyze the following vehicle telemetry data patterns (Speed, RPM, Battery, Temp):\n\n{{ JSON.stringify($json.telemetry_records) }}\n\nIdentify any issues or repeating faults. Calculate an overall health score (0-100).\n\nOutput STRICT valid JSON:\n{\n  \"analysis_summary\": \"...\",\n  \"health_score\": 85\n}"
+                        }
+                    ]
+                },
+                "jsonOutput": true,
+                "options": {}
+            },
+            "id": "3df29ee6-ba47-435e-9234-382a2419eb66",
+            "name": "Analyze Vehicle Health",
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1424,
+                -128
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "KmripA9dfAZsJkr0",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id-1",
+                            "name": "analysis_summary",
+                            "value": "={{ $json.content.parts[0].text ? JSON.parse($json.content.parts[0].text).analysis_summary : JSON.parse($json.content).analysis_summary }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "id-2",
+                            "name": "health_score",
+                            "value": "={{ $json.content.parts[0].text ? JSON.parse($json.content.parts[0].text).health_score : JSON.parse($json.content).health_score }}",
+                            "type": "number"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "7f3549be-8f24-4f80-9004-c9ed0b765f24",
+            "name": "Format Response",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                1648,
+                -128
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify($json) }}",
+                "options": {}
+            },
+            "id": "f49bce16-9c2c-46e9-9a8e-23692ae1fce9",
+            "name": "Return Analysis",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1872,
+                -128
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Workflow Configuration",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Workflow Configuration": {
+            "main": [
+                [
+                    {
+                        "node": "Get Vehicle Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Vehicle Data": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Data": {
+            "main": [
+                [
+                    {
+                        "node": "Analyze Vehicle Health",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Analyze Vehicle Health": {
+            "main": [
+                [
+                    {
+                        "node": "Format Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Response": {
+            "main": [
+                [
+                    {
+                        "node": "Return Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}

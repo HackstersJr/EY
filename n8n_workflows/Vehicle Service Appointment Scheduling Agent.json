@@ -1,0 +1,298 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/scheduling",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "9b257cfc-a451-43f7-9eb7-10e593a47a5a",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -896,
+                96
+            ],
+            "webhookId": "b0d19961-ca51-4947-90d5-c3077e67da0b"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id-1",
+                            "name": "tableName",
+                            "value": "appointments",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "includeOtherFields": true,
+                "options": {}
+            },
+            "id": "96ec2533-e056-4158-99c2-3de06ad9e5c3",
+            "name": "Workflow Configuration",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                -672,
+                96
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=SELECT count(*) as count FROM {{ $('Workflow Configuration').first().json.tableName }} WHERE vehicle_id = '{{ $('Webhook Trigger').first().json.body.vehicle_id }}' AND status = 'CONFIRMED'",
+                "options": {}
+            },
+            "id": "b1c65085-dac9-41ab-8e0b-1a72462f3a1e",
+            "name": "Check Existing Appointment",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                -448,
+                96
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose"
+                    },
+                    "conditions": [
+                        {
+                            "id": "id-1",
+                            "leftValue": "={{ parseInt($json.count) }}",
+                            "rightValue": 0,
+                            "operator": {
+                                "type": "number",
+                                "operation": "gt"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "92bbd83e-422f-44b2-bd0c-8943b16a0103",
+            "name": "Appointment Exists?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                -224,
+                96
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "function uuidv4() { return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); }); }\nconst confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();\nreturn { confirmation_code: confirmationCode, id: uuidv4() };"
+            },
+            "id": "f654a464-528e-4519-b943-c77aa2ca4f68",
+            "name": "Generate Confirmation Code",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO {{ $('Workflow Configuration').first().json.tableName }} (id, user_id, vehicle_id, appointment_date, service_center_id, status, confirmation_code) VALUES ('{{ $json.id }}', '{{ $('Webhook Trigger').first().json.body.user_id }}', '{{ $('Webhook Trigger').first().json.body.vehicle_id }}', '{{ $('Webhook Trigger').first().json.body.preferred_date }}', '{{ $('Webhook Trigger').first().json.body.service_center_id }}', 'CONFIRMED', '{{ $json.confirmation_code }}') RETURNING *",
+                "options": {}
+            },
+            "id": "40c8d7ba-42c1-467b-a55b-28dc9cdbecb6",
+            "name": "Insert New Appointment",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                224,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id-1",
+                            "name": "success",
+                            "value": true,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": "id-2",
+                            "name": "appointment_id",
+                            "value": "={{ $('Insert New Appointment').first().json.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "id-3",
+                            "name": "confirmation_code",
+                            "value": "={{ $json.confirmation_code }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "40f6d721-a83c-4761-8880-e0fda0ea6628",
+            "name": "Format Success Response",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                448,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id-1",
+                            "name": "success",
+                            "value": false,
+                            "type": "boolean"
+                        },
+                        {
+                            "id": "id-2",
+                            "name": "message",
+                            "value": "An active appointment already exists for this vehicle",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "9df1993e-b9be-490e-9bcb-69b23927b53d",
+            "name": "Format Exists Response",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                448,
+                192
+            ]
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "id": "bfe4d314-1554-479b-9d24-7c3133410d8f",
+            "name": "Return Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                672,
+                96
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Workflow Configuration",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Workflow Configuration": {
+            "main": [
+                [
+                    {
+                        "node": "Check Existing Appointment",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Existing Appointment": {
+            "main": [
+                [
+                    {
+                        "node": "Appointment Exists?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Appointment Exists?": {
+            "main": [
+                [
+                    {
+                        "node": "Format Exists Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Generate Confirmation Code",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Confirmation Code": {
+            "main": [
+                [
+                    {
+                        "node": "Insert New Appointment",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Insert New Appointment": {
+            "main": [
+                [
+                    {
+                        "node": "Format Success Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Success Response": {
+            "main": [
+                [
+                    {
+                        "node": "Return Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Exists Response": {
+            "main": [
+                [
+                    {
+                        "node": "Return Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}

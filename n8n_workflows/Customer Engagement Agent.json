@@ -1,0 +1,243 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                460,
+                300
+            ],
+            "webhookId": "customer-engagement-webhook"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=SELECT * FROM chat_sessions WHERE user_id = '{{ $json.body.user_id }}' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
+                "options": {}
+            },
+            "id": "get-active-session",
+            "name": "Get Active Session",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                680,
+                300
+            ],
+            "alwaysOutputData": true,
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "mode": "id",
+                    "value": "gemini-1.5-pro"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "content": "=You are a helpful automotive assistant. Be professional and empathetic.\n\nUser Message: {{ $('Webhook Trigger').first().json.body.message }}\n\nHistory: {{ $json.messages ? JSON.stringify($json.messages) : 'No history' }}"
+                        }
+                    ]
+                },
+                "jsonOutput": false,
+                "options": {}
+            },
+            "id": "gemini-chat",
+            "name": "Gemini Chat",
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                900,
+                300
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "KmripA9dfAZsJkr0",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose"
+                    },
+                    "conditions": [
+                        {
+                            "id": "id-1",
+                            "leftValue": "={{ $('Get Active Session').first().json.id }}",
+                            "rightValue": "",
+                            "operator": {
+                                "type": "string",
+                                "operation": "exists"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "session-exists",
+            "name": "Session Exists?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                1120,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=UPDATE chat_sessions SET messages = messages || '[{\"role\": \"user\", \"content\": \"{{ $('Webhook Trigger').first().json.body.message.replace(/'/g, \"''\") }}\"}, {\"role\": \"assistant\", \"content\": \"{{ $json.text.replace(/'/g, \"''\") }}\"}]'::jsonb WHERE id = '{{ $('Get Active Session').first().json.id }}'",
+                "options": {}
+            },
+            "id": "update-session",
+            "name": "Update Session",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                1340,
+                200
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO chat_sessions (id, user_id, role, messages) VALUES (gen_random_uuid(), '{{ $('Webhook Trigger').first().json.body.user_id }}', 'customer', '[{\"role\": \"user\", \"content\": \"{{ $('Webhook Trigger').first().json.body.message.replace(/'/g, \"''\") }}\"}, {\"role\": \"assistant\", \"content\": \"{{ $json.text.replace(/'/g, \"''\") }}\"}]'::jsonb)",
+                "options": {}
+            },
+            "id": "create-session",
+            "name": "Create Session",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                1340,
+                400
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\n  \"response\": \"{{ $('Gemini Chat').first().json.text.replace(/\"/g, '\\\\\"') }}\"\n}",
+                "options": {}
+            },
+            "id": "respond-to-webhook",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1600,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Session",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Session": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Chat",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Chat": {
+            "main": [
+                [
+                    {
+                        "node": "Session Exists?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Session Exists?": {
+            "main": [
+                [
+                    {
+                        "node": "Update Session",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Create Session",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Session": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Session": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}
