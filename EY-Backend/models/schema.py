@@ -163,3 +163,20 @@ class ManufacturingInsight(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     insight_data = Column(JSONB)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Telemetry(Base):
+    __tablename__ = "telemetry"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    vehicle_id = Column(String, ForeignKey("vehicles.id"))
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    speed = Column(Float)
+    rpm = Column(Float)
+    engine_temp = Column(Float)
+    battery_level = Column(Float)
+    brake_wear = Column(Float)
+    tire_pressure_fl = Column(Float)
+    tire_pressure_fr = Column(Float)
+    tire_pressure_rl = Column(Float)
+    tire_pressure_rr = Column(Float)
+    latitude = Column(Float)
+    longitude = Column(Float)

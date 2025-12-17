@@ -18,7 +18,7 @@ import axios from 'axios';
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 // ============================================================================
-// MOCK DATA CONSTANTS
+// MOCK DATA CONSTANTS (Kept for Dashboard)
 // ============================================================================
 
 const VEHICLE_MODELS = [
@@ -96,9 +96,6 @@ const simulateDelay = (ms: number = 300) => new Promise(resolve => setTimeout(re
 // API FUNCTIONS
 // ============================================================================
 
-/**
- * Get Manufacturing Overview Dashboard Data
- */
 export const getManufacturingOverview = async (
     _params?: ManufacturingOverviewParams
 ): Promise<ManufacturingOverview> => {
@@ -134,9 +131,6 @@ export const getManufacturingOverview = async (
     };
 };
 
-/**
- * Get Manufacturing Models List
- */
 export const getManufacturingModels = async (
     _params?: ManufacturingModelsParams
 ): Promise<ManufacturingModelSummary[]> => {
@@ -160,9 +154,6 @@ export const getManufacturingModels = async (
     });
 };
 
-/**
- * Get Model Defects Detail with RCA/CAPA
- */
 export const getManufacturingModelDefects = async (
     modelId: string
 ): Promise<ManufacturingModelDefects> => {
@@ -176,7 +167,6 @@ export const getManufacturingModelDefects = async (
         const trendPercentage = trend === 'STABLE' ? 0 : randomFloat(5, 30);
         const defectName = randomItem(cat.subcategories);
 
-        // Generate realistic RCA
         const rcaTemplate = randomItem(RCA_TEMPLATES);
         const rca = rcaTemplate
             .replace('{component}', defectName.toLowerCase())
@@ -184,7 +174,6 @@ export const getManufacturingModelDefects = async (
             .replace('{process}', randomItem(['assembly', 'welding', 'coating', 'testing']))
             .replace('{condition}', randomItem(['high temperature', 'humid', 'corrosive', 'high-load']));
 
-        // Generate CAPA items
         const capaCount = randomInt(2, 5);
         const capaItems = CAPA_ACTIONS.slice(0, capaCount).map((capa, capaIdx) => ({
             id: `CAPA-${model.modelId.toUpperCase().slice(0, 3)}-${(idx + 1).toString().padStart(2, '0')}${capaIdx + 1}`,
@@ -223,9 +212,6 @@ export const getManufacturingModelDefects = async (
     };
 };
 
-/**
- * Get Manufacturing Locations List
- */
 export const getManufacturingLocations = async (
     _params?: ManufacturingLocationsParams
 ): Promise<ManufacturingLocationSummary[]> => {
@@ -243,9 +229,6 @@ export const getManufacturingLocations = async (
     }));
 };
 
-/**
- * Get Location Defects Detail
- */
 export const getManufacturingLocationDefects = async (
     locId: string
 ): Promise<ManufacturingLocationDefects> => {
@@ -291,35 +274,34 @@ export const sendManufacturingChatMessage = async (
     request: ManufacturingChatRequest
 ): Promise<ManufacturingChatResponse> => {
     try {
-        const response = await axios.post(`${BASE_URL}/agent/chat`, {
-            query: request.message,
-            context: {
-                ...request.context,
-                agent_type: 'manufacturing_insight' // Hint for Master Agent
-            }
+        // Updated to use the explicit Manufacturing Agent endpoint
+        const response = await axios.post(`${BASE_URL}/agent/manufacturing`, {
+            // Manufacturing agent currently doesn't use input, but we can send context
+            context: request.context
         });
 
-        // The backend returns { master_decision: ..., agent_result: ... }
-        // We need to extract the message from agent_result
-        const agentResult = response.data.agent_result;
+        // Agent returns { top_defects: [...], root_cause_analysis: {...}, recommended_actions: [...] }
+        const agentResult = response.data;
 
-        // Handle different response structures from different agents if needed
-        // For manufacturing agent, it returns { top_defects, root_cause_hypothesis, recommendations }
-        // We need to format this into a string message for the chat UI
+        let message = "Here is the latest manufacturing insight analysis:\n\n";
 
-        let message = "Here is the analysis:\n\n";
-        if (agentResult.root_cause_hypothesis) {
-            message += `**Root Cause Hypothesis:** ${agentResult.root_cause_hypothesis}\n\n`;
+        // Map Agent Keys (root_cause_analysis) to Frontend expectations if needed,
+        // or just format the string here.
+        if (agentResult.root_cause_analysis && agentResult.root_cause_analysis.primary_issue) {
+            message += `**Root Cause Analysis:** ${agentResult.root_cause_analysis.primary_issue}\n${agentResult.root_cause_analysis.details || ''}\n\n`;
         }
+
         if (agentResult.top_defects && agentResult.top_defects.length > 0) {
-            message += `**Top Defects:**\n${agentResult.top_defects.map((d: string) => `• ${d}`).join('\n')}\n\n`;
-        }
-        if (agentResult.recommendations && agentResult.recommendations.length > 0) {
-            message += `**Recommendations:**\n${agentResult.recommendations.map((r: string) => `• ${r}`).join('\n')}`;
+            message += `**Top Defects:**\n${agentResult.top_defects.map((d: { defect_name: string; count: number }) => `• ${d.defect_name} (${d.count} incidents)`).join('\n')}\n\n`;
         }
 
-        if (!agentResult.root_cause_hypothesis && !agentResult.top_defects) {
-            message = JSON.stringify(agentResult, null, 2);
+        if (agentResult.recommended_actions && agentResult.recommended_actions.length > 0) {
+            message += `**Recommendations:**\n${agentResult.recommended_actions.map((r: string) => `• ${r}`).join('\n')}`;
+        }
+
+        // Fallback dump
+        if (!agentResult.root_cause_analysis && !agentResult.top_defects) {
+            message = "No insights available at this time. (Debug: " + JSON.stringify(agentResult) + ")";
         }
 
         return {

@@ -12,8 +12,11 @@ import type {
   ChatResponse,
   TimeSlot,
 } from './types';
+import axios from 'axios';
 
-// Mock data
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+
+// MOCK DATA (Kept for non-agent endpoints)
 const MOCK_VEHICLES: Vehicle[] = [
   {
     id: 'veh-001',
@@ -25,7 +28,7 @@ const MOCK_VEHICLES: Vehicle[] = [
     customerId: 'cust-001',
   },
   {
-    id: 'veh-002',
+    id: 'e9cdfa2a-91ac-4c2e-975e-33a3ca1f8eb5', // Valid ID from DB
     model: 'Cayenne',
     make: 'Porsche',
     year: 2021,
@@ -35,77 +38,23 @@ const MOCK_VEHICLES: Vehicle[] = [
   },
 ];
 
-const MOCK_VEHICLE_STATUS: Record<string, VehicleStatus> = {
-  'veh-001': {
-    vehicleId: 'veh-001',
-    overallHealth: 87,
-    mileage: 45230,
-    lastServiceDate: '2024-09-15',
-    nextRecommendedService: '2025-03-15',
-    batteryHealth: 92,
-    engineHealth: 88,
-    brakeHealth: 85,
-    suspensionHealth: 90,
-  },
-};
-
-const MOCK_PREDICTED_ISSUES: Record<string, PredictedIssue[]> = {
-  'veh-001': [
-    {
-      id: 'issue-001',
-      vehicleId: 'veh-001',
-      componentName: 'Front Brake Pads',
-      componentId: 'front-brakes',
-      probability: 78,
-      severity: 'Medium',
-      description: 'Brake pads showing signs of wear. Recommended replacement within 2 months.',
-      recommendedServiceWindow: 'Within 60 days',
-      estimatedCost: 350,
-      predictedDate: '2025-02-07',
-    },
-    {
-      id: 'issue-002',
-      vehicleId: 'veh-001',
-      componentName: 'Battery Pack',
-      componentId: 'battery',
-      probability: 45,
-      severity: 'Low',
-      description: 'Minor degradation detected in battery cells. Monitor performance.',
-      recommendedServiceWindow: 'Within 6 months',
-      estimatedCost: 0,
-    },
-    {
-      id: 'issue-003',
-      vehicleId: 'veh-001',
-      componentName: 'Suspension System',
-      componentId: 'suspension',
-      probability: 62,
-      severity: 'Medium',
-      description: 'Shock absorbers may need attention. Schedule inspection.',
-      recommendedServiceWindow: 'Within 90 days',
-      estimatedCost: 600,
-      predictedDate: '2025-03-07',
-    },
-  ],
-};
-
 const MOCK_SERVICE_CENTERS: ServiceCenter[] = [
   {
-    id: 'sc-001',
+    id: 'CENTER-1',
     name: 'Porsche Centre Bangalore',
     address: '123 Outer Ring Road, Bangalore, KA 560103',
     phone: '+91 80 1234 5678',
     availableServices: ['Maintenance', 'Repairs', 'Diagnostics', 'Performance Tuning'],
   },
   {
-    id: 'sc-002',
+    id: 'CENTER-2',
     name: 'Premium Auto Care - Koramangala',
     address: '456 Koramangala, Bangalore, KA 560034',
     phone: '+91 80 8765 4321',
     availableServices: ['Maintenance', 'Repairs', 'Tire Service'],
   },
   {
-    id: 'sc-003',
+    id: 'CENTER-3',
     name: 'Porsche Approved Service - Whitefield',
     address: '789 Whitefield Main Rd, Bangalore, KA 560066',
     phone: '+91 80 9876 5432',
@@ -113,73 +62,85 @@ const MOCK_SERVICE_CENTERS: ServiceCenter[] = [
   },
 ];
 
-let mockAppointments: Appointment[] = [
-  {
-    id: 'apt-001',
-    vehicleId: 'veh-001',
-    customerId: 'cust-001',
-    serviceCenterId: 'sc-001',
-    serviceCenter: MOCK_SERVICE_CENTERS[0],
-    date: '2025-01-15',
-    timeSlot: '10:00 AM - 11:00 AM',
-    status: 'Scheduled',
-    serviceType: 'Routine Maintenance',
-    createdAt: '2024-12-01T10:00:00Z',
-  },
-];
-
+let mockAppointments: Appointment[] = [];
 let mockComplaints: Complaint[] = [];
 
-const MOCK_SERVICE_HISTORY: Record<string, ServiceRecord[]> = {
-  'veh-001': [
-    {
-      id: 'srv-001',
-      vehicleId: 'veh-001',
-      serviceCenterId: 'sc-001',
-      serviceCenter: MOCK_SERVICE_CENTERS[0],
-      date: '2024-09-15',
-      serviceType: 'Annual Maintenance',
-      description: 'Full vehicle inspection, brake fluid replacement, tire rotation',
-      cost: 8500,
-      mileageAtService: 40000,
-      partsReplaced: ['Brake Fluid', 'Air Filter'],
-      technician: 'Rajesh Kumar',
-    },
-    {
-      id: 'srv-002',
-      vehicleId: 'veh-001',
-      serviceCenterId: 'sc-001',
-      serviceCenter: MOCK_SERVICE_CENTERS[0],
-      date: '2024-03-20',
-      serviceType: 'Battery Check',
-      description: 'Battery health diagnostic and software update',
-      cost: 2000,
-      mileageAtService: 35000,
-      technician: 'Priya Sharma',
-    },
-  ],
-};
-
-// API Functions with mock implementations
+// API Functions
 
 export const getCustomerVehicles = async (): Promise<Vehicle[]> => {
-  // Simulate API delay
+  // Mock - No agent for vehicle list yet
   await new Promise((resolve) => setTimeout(resolve, 300));
   return MOCK_VEHICLES;
 };
 
 export const getVehicleStatus = async (vehicleId: string): Promise<VehicleStatus> => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  const status = MOCK_VEHICLE_STATUS[vehicleId];
-  if (!status) {
-    throw new Error('Vehicle status not found');
+  try {
+    // Call Data Analysis Agent
+    const response = await axios.post(`${BASE_URL}/agent/analysis`, {
+      vehicle_id: vehicleId,
+    });
+
+    const data = response.data; // Expects { health_score, analysis_summary, ... }
+
+    // Map Agent response to VehicleStatus
+    return {
+      vehicleId: vehicleId,
+      overallHealth: data.health_score || 85, // Use agent score or default
+      mileage: 45230, // Mock
+      lastServiceDate: '2024-09-15', // Mock
+      nextRecommendedService: '2025-03-15', // Mock
+      batteryHealth: 92, // Mock 
+      engineHealth: data.health_score || 88, // Link to overall health
+      brakeHealth: 85,
+      suspensionHealth: 90,
+    };
+  } catch (error) {
+    console.error("Analysis Agent Error:", error);
+    // Fallback to mock if agent fails or returns unknown
+    return {
+      vehicleId: vehicleId,
+      overallHealth: 87,
+      mileage: 45230,
+      lastServiceDate: '2024-09-15',
+      nextRecommendedService: '2025-03-15',
+      batteryHealth: 92,
+      engineHealth: 88,
+      brakeHealth: 85,
+      suspensionHealth: 90,
+    };
   }
-  return status;
 };
 
 export const getPredictedIssues = async (vehicleId: string): Promise<PredictedIssue[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return MOCK_PREDICTED_ISSUES[vehicleId] || [];
+  try {
+    // Call Data Analysis Agent
+    const response = await axios.post(`${BASE_URL}/agent/analysis`, {
+      vehicle_id: vehicleId,
+    });
+
+    const data = response.data;
+    const issues: PredictedIssue[] = [];
+
+    if (data.analysis_summary) {
+      issues.push({
+        id: `issue-${Date.now()}`,
+        vehicleId: vehicleId,
+        componentName: 'AI Diagnosis',
+        componentId: 'ai-diag',
+        probability: 90,
+        severity: data.health_score < 70 ? 'High' : 'Medium',
+        description: data.analysis_summary,
+        recommendedServiceWindow: 'Within 30 days',
+        estimatedCost: 500,
+        predictedDate: new Date().toISOString()
+      });
+    }
+    return issues;
+
+  } catch (error) {
+    console.error("Analysis Agent Error:", error);
+    return [];
+  }
 };
 
 export const getCustomerAppointments = async (vehicleId: string): Promise<Appointment[]> => {
@@ -197,51 +158,61 @@ export const getAvailableTimeSlots = async (
   _date: string
 ): Promise<TimeSlot[]> => {
   await new Promise((resolve) => setTimeout(resolve, 300));
-
-  // Generate mock time slots
-  const slots: TimeSlot[] = [
+  return [
     { id: 'slot-1', time: '09:00 AM - 10:00 AM', available: true },
     { id: 'slot-2', time: '10:00 AM - 11:00 AM', available: true },
     { id: 'slot-3', time: '11:00 AM - 12:00 PM', available: false },
     { id: 'slot-4', time: '02:00 PM - 03:00 PM', available: true },
     { id: 'slot-5', time: '03:00 PM - 04:00 PM', available: true },
-    { id: 'slot-6', time: '04:00 PM - 05:00 PM', available: false },
   ];
-
-  return slots;
 };
 
 export const createAppointment = async (
   input: CreateAppointmentInput
 ): Promise<Appointment> => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  try {
+    // Call Scheduling Agent
+    const response = await axios.post(`${BASE_URL}/agent/scheduling`, {
+      user_id: 'cust-001', // Hardcoded for now, or get from context
+      vehicle_id: input.vehicleId,
+      preferred_date: input.date,
+      service_center_id: input.serviceCenterId
+    });
 
-  const serviceCenter = MOCK_SERVICE_CENTERS.find((sc) => sc.id === input.serviceCenterId);
+    // Agent returns { success: true, appointment_id: ..., confirmation_code: ... }
+    const success = response.data.success || response.data.json?.success;
 
-  const newAppointment: Appointment = {
-    id: `apt-${Date.now()}`,
-    vehicleId: input.vehicleId,
-    customerId: 'cust-001',
-    serviceCenterId: input.serviceCenterId,
-    serviceCenter,
-    date: input.date,
-    timeSlot: input.timeSlot,
-    status: 'Scheduled',
-    issueId: input.issueId,
-    serviceType: input.serviceType,
-    notes: input.notes,
-    createdAt: new Date().toISOString(),
-  };
+    if (success) {
+      const newAppointment: Appointment = {
+        id: response.data.appointment_id || response.data.json?.appointment_id || `apt-${Date.now()}`,
+        vehicleId: input.vehicleId,
+        customerId: 'cust-001',
+        serviceCenterId: input.serviceCenterId,
+        serviceCenter: MOCK_SERVICE_CENTERS.find(s => s.id === input.serviceCenterId),
+        date: input.date,
+        timeSlot: input.timeSlot,
+        status: 'Confirmed', // Agent marks it as CONFIRMED
+        serviceType: input.serviceType,
+        notes: input.notes,
+        createdAt: new Date().toISOString(),
+      };
+      mockAppointments.push(newAppointment);
+      return newAppointment;
+    } else {
+      throw new Error(response.data.message || "Failed to schedule appointment");
+    }
 
-  mockAppointments.push(newAppointment);
-  return newAppointment;
+  } catch (error) {
+    console.error("Scheduling Agent Error:", error);
+    throw error;
+  }
 };
 
 export const createComplaint = async (
   input: CreateComplaintInput
 ): Promise<Complaint> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-
+  // Mock logic
   const newComplaint: Complaint = {
     id: `cmp-${Date.now()}`,
     vehicleId: input.vehicleId,
@@ -254,45 +225,42 @@ export const createComplaint = async (
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
   mockComplaints.push(newComplaint);
   return newComplaint;
 };
 
-export const getServiceHistory = async (vehicleId: string): Promise<ServiceRecord[]> => {
+export const getServiceHistory = async (_vehicleId: string): Promise<ServiceRecord[]> => {
+  // Can be enhanced to fetch from DB if backend supports it
   await new Promise((resolve) => setTimeout(resolve, 400));
-  return MOCK_SERVICE_HISTORY[vehicleId] || [];
+  return [];
 };
 
 export const sendCustomerChatMessage = async (
   input: ChatInput
 ): Promise<ChatResponse> => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  try {
+    // Call Customer Engagement Agent
+    const response = await axios.post(`${BASE_URL}/agent/chat`, {
+      query: input.message,
+      context: {
+        user_id: 'cust-001',
+        vehicle_id: input.vehicleId
+      }
+    });
 
-  // Generate contextual mock response based on the message
-  let responseText = '';
-  const lowerMessage = input.message.toLowerCase();
+    // Backend returns: { response: "AI Message" } (from n8n structure)
+    return {
+      message: response.data.response || "I didn't understand that.",
+      timestamp: new Date().toISOString(),
+      suggestedActions: ['Book Appointment', 'View Details']
+    };
 
-  if (input.issueId) {
-    const issue = MOCK_PREDICTED_ISSUES[input.vehicleId]?.find((i) => i.id === input.issueId);
-    if (issue) {
-      responseText = `I can help you with the ${issue.componentName} issue. Based on our analysis, there's a ${issue.probability}% probability that this component may need attention. The severity is ${issue.severity}. ${issue.description} I recommend scheduling a service appointment within the suggested timeframe. Would you like me to help you book an appointment?`;
-    }
-  } else if (lowerMessage.includes('brake')) {
-    responseText = 'I see you\'re asking about brakes. Your front brake pads are showing some wear and we predict they may need replacement within 60 days. This is a medium severity issue with 78% probability. Would you like to schedule a brake inspection?';
-  } else if (lowerMessage.includes('battery')) {
-    responseText = 'Your battery pack is in good condition with 92% health. We\'ve detected minor degradation which is normal for a vehicle of this age. Continue monitoring, and we\'ll alert you if any action is needed. Your next battery check is recommended in 6 months.';
-  } else if (lowerMessage.includes('appointment') || lowerMessage.includes('book')) {
-    responseText = 'I can help you book a service appointment. We have availability at Porsche Centre Bangalore and other partner locations. What type of service do you need, and when would you prefer to visit?';
-  } else if (lowerMessage.includes('cost') || lowerMessage.includes('price')) {
-    responseText = 'Based on your predicted maintenance items: Front brake pad replacement is estimated at ₹350, and suspension inspection at ₹600. These are estimates and actual costs may vary based on the final diagnosis. Would you like to schedule an inspection?';
-  } else {
-    responseText = 'I\'m your AI vehicle assistant. I can help you with information about your vehicle health, predicted maintenance issues, service history, and booking appointments. How can I assist you today?';
+  } catch (error) {
+    console.error("Chat Agent Error:", error);
+    return {
+      message: "I'm having trouble connecting to the network.",
+      timestamp: new Date().toISOString(),
+      suggestedActions: []
+    };
   }
-
-  return {
-    message: responseText,
-    timestamp: new Date().toISOString(),
-    suggestedActions: ['Book Appointment', 'View Details', 'Contact Support'],
-  };
 };
