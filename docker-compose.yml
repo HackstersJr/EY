@@ -1,7 +1,7 @@
-version: '3.8'
-
 services:
+  # ======================
   # Frontends
+  # ======================
   manufacturer-frontend:
     build: ./EY-Manufacturer-frontend
     ports:
@@ -29,52 +29,83 @@ services:
     depends_on:
       - backend
 
+  # ======================
   # Backend
+  # ======================
   backend:
     build: ./EY-Backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://user:password@db/ey_telematics_db
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - PYTHONUNBUFFERED=1
+
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: postgresql://user:password@db:5432/ey_telematics_db
     depends_on:
       - db
     networks:
       - ey-network
 
+  # ======================
   # Database
+  # ======================
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=ey_telematics_db
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ey_telematics_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ey-network
 
+  # ======================
+  # n8n (Cloudflare Tunnel)
+  # ======================
   n8n:
     image: docker.n8n.io/n8nio/n8n:2.0.0
-    ports:
-      - "5678:5678"
+    container_name: n8n
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=false
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=password
-      - WEBHOOK_URL=http://localhost:5678/
+      N8N_BASIC_AUTH_ACTIVE: true
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: password
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: db
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ey_telematics_db
+      DB_POSTGRESDB_USER: user
+      DB_POSTGRESDB_PASSWORD: password
+
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
       - ey-network
+    depends_on:
+      - db
+
+  # ======================
+  # Cloudflared (existing tunnel)
+  # ======================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    networks:
+      - ey-network
+    depends_on:
+      - n8n
 
 volumes:
   postgres_data:
   n8n_data:
-
 
 networks:
   ey-network:
