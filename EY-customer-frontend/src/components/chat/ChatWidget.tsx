@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { sendCustomerChatMessage } from '@/lib/customerApi';
 import type { ChatMessage } from '@/lib/types';
 import { MessageCircle, X, Send, Loader2, Sparkles, Minimize2 } from 'lucide-react';
@@ -8,10 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ChatWidgetProps {
   title?: string;
   vehicleId?: string;
+  issueId?: string;
 }
 
-export const ChatWidget = ({ title = 'AI Assistant', vehicleId }: ChatWidgetProps) => {
-  const location = useLocation();
+export const ChatWidget = ({ title = 'AI Assistant', vehicleId, issueId }: ChatWidgetProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
