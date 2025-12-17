@@ -1,4 +1,6 @@
 {
+    "name": "Manufacturing Insights Agent",
+    "active": true,
     "nodes": [
         {
             "parameters": {

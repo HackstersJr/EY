@@ -123,4 +123,4 @@ async def oem_agent(request: OEMRequest):
     # Using the same webhook as customer chat for now to get AI response capability
     # The prompt in valid agent should handle "OEM" role if configured, otherwise we need a new workflow.
     # PROPOSAL: Use a new webhook 'agent/oem' and I will create that workflow if it doesn't exist.
-    return await forward_to_n8n("agent/oem", payload)
+    return await forward_to_n8n("agent/oem-db", payload)

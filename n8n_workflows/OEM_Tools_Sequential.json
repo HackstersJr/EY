@@ -6,7 +6,7 @@
         {
             "parameters": {
                 "httpMethod": "POST",
-                "path": "agent/oem",
+                "path": "agent/oem-db",
                 "responseMode": "responseNode",
                 "options": {}
             },
