@@ -7,13 +7,13 @@
                 "responseMode": "responseNode",
                 "options": {}
             },
-            "id": "webhook-trigger",
+            "id": "1a54c1d1-90ad-46aa-b69f-9cf573404931",
             "name": "Webhook Trigger",
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 2.1,
             "position": [
-                460,
-                300
+                -272,
+                144
             ],
             "webhookId": "customer-engagement-webhook"
         },
@@ -23,13 +23,13 @@
                 "query": "=SELECT * FROM chat_sessions WHERE user_id = '{{ $json.body.user_id }}' AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
                 "options": {}
             },
-            "id": "get-active-session",
+            "id": "a4d7200b-e035-41eb-8059-f8f019474bce",
             "name": "Get Active Session",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.6,
             "position": [
-                680,
-                300
+                -48,
+                144
             ],
             "alwaysOutputData": true,
             "credentials": {
@@ -43,8 +43,9 @@
             "parameters": {
                 "modelId": {
                     "__rl": true,
-                    "mode": "id",
-                    "value": "gemini-1.5-pro"
+                    "value": "models/gemini-flash-lite-latest",
+                    "mode": "list",
+                    "cachedResultName": "models/gemini-flash-lite-latest"
                 },
                 "messages": {
                     "values": [
@@ -53,16 +54,15 @@
                         }
                     ]
                 },
-                "jsonOutput": false,
                 "options": {}
             },
-            "id": "gemini-chat",
+            "id": "67dcde38-fa49-4bfc-92f4-a35b2659138f",
             "name": "Gemini Chat",
             "type": "@n8n/n8n-nodes-langchain.googleGemini",
             "typeVersion": 1,
             "position": [
-                900,
-                300
+                176,
+                144
             ],
             "credentials": {
                 "googlePalmApi": {
@@ -94,13 +94,13 @@
                 },
                 "options": {}
             },
-            "id": "session-exists",
+            "id": "22b3028b-811b-49b6-854c-d8b334930a37",
             "name": "Session Exists?",
             "type": "n8n-nodes-base.if",
             "typeVersion": 2.3,
             "position": [
-                1120,
-                300
+                528,
+                144
             ]
         },
         {
@@ -109,13 +109,13 @@
                 "query": "=UPDATE chat_sessions SET messages = messages || '[{\"role\": \"user\", \"content\": \"{{ $('Webhook Trigger').first().json.body.message.replace(/'/g, \"''\") }}\"}, {\"role\": \"assistant\", \"content\": \"{{ $json.text.replace(/'/g, \"''\") }}\"}]'::jsonb WHERE id = '{{ $('Get Active Session').first().json.id }}'",
                 "options": {}
             },
-            "id": "update-session",
+            "id": "f348f439-d15d-4a3e-8825-129091f55ac4",
             "name": "Update Session",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.6,
             "position": [
-                1340,
-                200
+                752,
+                48
             ],
             "credentials": {
                 "postgres": {
@@ -130,13 +130,13 @@
                 "query": "=INSERT INTO chat_sessions (id, user_id, role, messages) VALUES (gen_random_uuid(), '{{ $('Webhook Trigger').first().json.body.user_id }}', 'customer', '[{\"role\": \"user\", \"content\": \"{{ $('Webhook Trigger').first().json.body.message.replace(/'/g, \"''\") }}\"}, {\"role\": \"assistant\", \"content\": \"{{ $json.text.replace(/'/g, \"''\") }}\"}]'::jsonb)",
                 "options": {}
             },
-            "id": "create-session",
+            "id": "b7f1fd9c-7e6d-4439-9136-3461077087ce",
             "name": "Create Session",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.6,
             "position": [
-                1340,
-                400
+                752,
+                240
             ],
             "credentials": {
                 "postgres": {
@@ -148,16 +148,16 @@
         {
             "parameters": {
                 "respondWith": "json",
-                "responseBody": "{\n  \"response\": \"{{ $('Gemini Chat').first().json.text.replace(/\"/g, '\\\\\"') }}\"\n}",
+                "responseBody": "={{ JSON.stringify({ response: $('Gemini Chat').first().json.text }) }}",
                 "options": {}
             },
-            "id": "respond-to-webhook",
+            "id": "1dac141f-1e1e-46ca-b843-c2d0d1c06d32",
             "name": "Respond to Webhook",
             "type": "n8n-nodes-base.respondToWebhook",
             "typeVersion": 1.5,
             "position": [
-                1600,
-                300
+                976,
+                144
             ]
         }
     ],
@@ -238,6 +238,7 @@
     },
     "pinData": {},
     "meta": {
+        "templateCredsSetupCompleted": true,
         "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
     }
 }

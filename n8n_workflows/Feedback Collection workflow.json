@@ -1,0 +1,129 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/feedback",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "987d7081-a649-4be2-8f96-a6fe80c2b084",
+            "name": "Feedback Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -192,
+                -80
+            ],
+            "webhookId": "ba20df06-85e2-44c3-8caf-70bbf6d21ffd"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=UPDATE service_records SET customer_satisfaction = {{ $json.body.rating }}, technician_notes = CONCAT(technician_notes, ' [Customer Feedback]: ', '{{ $json.body.comments }}') WHERE appointment_id = '{{ $json.body.appointment_id }}' RETURNING *",
+                "options": {}
+            },
+            "id": "65ac6233-8213-496c-9431-fad7838f0836",
+            "name": "Update Service Record",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                256,
+                -80
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "value": "models/gemini-flash-lite-latest",
+                    "mode": "list",
+                    "cachedResultName": "models/gemini-flash-lite-latest"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "content": "=Analyze the sentiment of the following customer feedback and respond with ONLY one word: Positive, Negative, or Neutral.\n\nFeedback: {{ $('Feedback Webhook').first().json.body.comments }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "3a8d734f-9ff2-4eb6-a3a2-edfe1cb8ef73",
+            "name": "Analyze Sentiment",
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                480,
+                -80
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "KmripA9dfAZsJkr0",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ success: true, sentiment: $('Analyze Sentiment').first().json.text.trim() }) }}",
+                "options": {}
+            },
+            "id": "4f6d77d5-db21-4a25-b886-2572745eeb81",
+            "name": "Return Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1056,
+                -80
+            ]
+        }
+    ],
+    "connections": {
+        "Feedback Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Update Service Record",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Service Record": {
+            "main": [
+                [
+                    {
+                        "node": "Analyze Sentiment",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Analyze Sentiment": {
+            "main": [
+                [
+                    {
+                        "node": "Return Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}

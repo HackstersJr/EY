@@ -1,0 +1,184 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "agent/manufacturing",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                460,
+                300
+            ],
+            "webhookId": "manufacturing-insight-webhook"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=SELECT r.component, r.root_cause, r.actual_finding, v.model, v.variant, v.year FROM rca_capa_records r JOIN vehicles v ON r.vehicle_id = v.id ORDER BY r.created_at DESC LIMIT 50",
+                "options": {}
+            },
+            "id": "fetch-defects",
+            "name": "Fetch Defect Data",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                680,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const defects = $input.all().map(item => item.json);\nreturn { json: { defects } };"
+            },
+            "id": "aggregate-defects",
+            "name": "Aggregate Defects",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "modelId": {
+                    "__rl": true,
+                    "mode": "id",
+                    "value": "gemini-1.5-pro"
+                },
+                "messages": {
+                    "values": [
+                        {
+                            "content": "=Analyze the following vehicle defect records to identify manufacturing trends or quality control issues.\n\nData: {{ JSON.stringify($json.defects) }}\n\nProvide a JSON summary with keys: 'top_defects', 'root_cause_analysis', 'recommended_actions' (list of strings)."
+                        }
+                    ]
+                },
+                "jsonOutput": true,
+                "options": {}
+            },
+            "id": "gemini-analysis",
+            "name": "Gemini Analysis",
+            "type": "@n8n/n8n-nodes-langchain.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                300
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "KmripA9dfAZsJkr0",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO manufacturing_insights (id, insight_data) VALUES (gen_random_uuid(), '{{ JSON.stringify(JSON.parse($json.content.parts[0].text)).replace(/'/g, \"''\") }}'::jsonb) RETURNING *",
+                "options": {}
+            },
+            "id": "store-insight",
+            "name": "Store Insight",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                1340,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "3e6Bci3IGFQfegT0",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify($json.insight_data) }}",
+                "options": {}
+            },
+            "id": "respond-to-webhook",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1560,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Defect Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Defect Data": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Defects",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Defects": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini Analysis",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Analysis": {
+            "main": [
+                [
+                    {
+                        "node": "Store Insight",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Store Insight": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "instanceId": "6ad332fc6138847d5a9dafa83b35c9fbc8a8b304da1bc60224e785417accf6cb"
+    }
+}
