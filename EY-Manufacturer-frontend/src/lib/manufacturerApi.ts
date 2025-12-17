@@ -22,12 +22,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api
 // ============================================================================
 
 const VEHICLE_MODELS = [
-    { modelId: 'aurora-ev', modelName: 'Aurora EV' },
-    { modelId: 'nexus-sport', modelName: 'Nexus Sport' },
-    { modelId: 'terra-suv', modelName: 'Terra SUV' },
-    { modelId: 'vega-sedan', modelName: 'Vega Sedan' },
-    { modelId: 'titan-truck', modelName: 'Titan Truck' },
-    { modelId: 'pulse-compact', modelName: 'Pulse Compact' },
+    { modelId: 'porsche-911', modelName: 'Porsche 911' },
+    { modelId: 'porsche-cayenne', modelName: 'Porsche Cayenne' },
+    { modelId: 'porsche-taycan', modelName: 'Porsche Taycan' },
+    { modelId: 'porsche-macan', modelName: 'Porsche Macan' },
+    { modelId: 'porsche-panamera', modelName: 'Porsche Panamera' },
+    { modelId: 'porsche-boxster', modelName: 'Porsche Boxster' },
 ];
 
 const REGIONS = ['North', 'South', 'East', 'West', 'Central'];

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useCustomerVehicles } from '@/hooks/useCustomerVehicles';
 import { useVehicleStatus } from '@/hooks/useVehicleStatus';
 import { usePredictedIssues } from '@/hooks/usePredictedIssues';
@@ -8,7 +8,6 @@ import { VehicleHealthCard } from '@/components/customer/VehicleHealthCard';
 import { PredictedIssuesList } from '@/components/customer/PredictedIssuesList';
 import { QuickActions } from '@/components/customer/QuickActions';
 import { ChatWidget } from '@/components/chat/ChatWidget';
-import { X } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,93 +33,15 @@ const itemVariants = {
   },
 };
 
-// Part information helper
-const getPartInfo = (partId: string): { icon: string; text: string }[] => {
-  const partDatabase: Record<string, { icon: string; text: string }[]> = {
-    door: [
-      { icon: '🚪', text: 'Power windows operational' },
-      { icon: '🔒', text: 'Locks functioning normally' },
-      { icon: '✅', text: 'No issues detected' },
-    ],
-    wheel: [
-      { icon: '🛞', text: 'Tire pressure: Optimal' },
-      { icon: '📏', text: 'Tread depth: Good' },
-      { icon: '⚖️', text: 'Balance: Aligned' },
-    ],
-    hood: [
-      { icon: '🔧', text: 'Engine bay accessible' },
-      { icon: '🌡️', text: 'Cooling system active' },
-      { icon: '✅', text: 'All components secure' },
-    ],
-    trunk: [
-      { icon: '📦', text: 'Storage capacity: Full' },
-      { icon: '🔒', text: 'Lock mechanism: OK' },
-      { icon: '💡', text: 'Lighting functional' },
-    ],
-    window: [
-      { icon: '🪟', text: 'Glass integrity: Perfect' },
-      { icon: '🌡️', text: 'Tint UV protection active' },
-      { icon: '💨', text: 'Defrost system ready' },
-    ],
-    mirror: [
-      { icon: '🔍', text: 'Visibility: Optimal' },
-      { icon: '⚡', text: 'Auto-adjust enabled' },
-      { icon: '🌡️', text: 'Heating available' },
-    ],
-    headlight: [
-      { icon: '💡', text: 'Both units operational' },
-      { icon: '🌟', text: 'LED system: Bright' },
-      { icon: '🔄', text: 'Auto-leveling active' },
-    ],
-    taillight: [
-      { icon: '🔴', text: 'Brake lights: Working' },
-      { icon: '🟡', text: 'Turn signals: Active' },
-      { icon: '⚪', text: 'Reverse lights: OK' },
-    ],
-    bumper: [
-      { icon: '🛡️', text: 'Impact protection intact' },
-      { icon: '📡', text: 'Parking sensors active' },
-      { icon: '✅', text: 'No damage detected' },
-    ],
-    spoiler: [
-      { icon: '🌪️', text: 'Aerodynamics optimized' },
-      { icon: '⚙️', text: 'Mounting secure' },
-      { icon: '🎨', text: 'Paint condition: Perfect' },
-    ],
-    exhaust: [
-      { icon: '💨', text: 'Emissions: Normal' },
-      { icon: '🔇', text: 'Sound dampening: OK' },
-      { icon: '🌡️', text: 'Temperature: Regulated' },
-    ],
-    body: [
-      { icon: '🎨', text: 'Paint condition: Excellent' },
-      { icon: '🛡️', text: 'No scratches detected' },
-      { icon: '✨', text: 'Ceramic coating active' },
-    ],
-  };
-
-  return partDatabase[partId] || [
-    { icon: 'ℹ️', text: 'Component selected' },
-    { icon: '✅', text: 'Status: Normal' },
-    { icon: '🔍', text: 'Click for details' },
-  ];
-};
-
 export const DashboardPage = () => {
   const { data: vehicles } = useCustomerVehicles();
   const selectedVehicle = vehicles?.[0];
-  
+
   const { data: vehicleStatus, isLoading: statusLoading } = useVehicleStatus(selectedVehicle?.id);
   const { data: predictedIssues, isLoading: issuesLoading } = usePredictedIssues(selectedVehicle?.id);
-  
-  const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+
   const [chatVisible, setChatVisible] = useState(false);
   const [chatIssueId, setChatIssueId] = useState<string | undefined>();
-
-  const handlePartSelect = (partId: string) => {
-    setSelectedPartId(partId);
-    console.log('Selected part:', partId);
-  };
 
   const handleAskAI = (issueId: string) => {
     setChatIssueId(issueId);
@@ -189,51 +110,14 @@ export const DashboardPage = () => {
 
         {/* 3D Car Viewer - CENTER STAGE */}
         <div className="relative">
-          <CarViewer3D onPartSelect={handlePartSelect} />
-          
-          {/* Selected part panel */}
-          <AnimatePresence>
-            {selectedPartId && (
-              <motion.div
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -20, opacity: 0 }}
-                className="absolute top-6 left-6 glass-strong px-6 py-4 rounded-xl z-20 min-w-[280px]"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Selected Component</p>
-                    <p className="text-xl font-semibold text-tesla-blue-400 capitalize">
-                      {selectedPartId.replace('-', ' ')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedPartId(null)}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                {/* Part-specific info */}
-                <div className="space-y-2 text-sm">
-                  {getPartInfo(selectedPartId).map((info, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-gray-300">
-                      <span className="text-tesla-blue-400">{info.icon}</span>
-                      <span>{info.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <CarViewer3D />
         </div>
       </motion.section>
 
       {/* Stats Grid - Floating Glass Cards */}
       <motion.section variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
         {/* Vehicle Health Card */}
-        <motion.div 
+        <motion.div
           className="lg:col-span-1"
           whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 300 }}
